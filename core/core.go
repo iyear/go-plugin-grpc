@@ -131,6 +131,11 @@ func (c *Core) Call(plugin, version, funcName string, args map[string]interface{
 		return nil, fmt.Errorf("plugin %s not found", plugin)
 	}
 
+	// reduce functions not found after transmission
+	if !p.(*pluginInfo).funcs.Contains(funcName) {
+		return nil, fmt.Errorf("func %s not found", funcName)
+	}
+
 	id := uint64(time.Now().UnixNano())
 
 	// set result channel
