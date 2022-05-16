@@ -98,7 +98,7 @@ func WithServerOpts(opts ...grpc.ServerOption) Option {
 	})
 }
 
-func WithInterfaces(interfaces ...map[string][]string) Option {
+func WithInterfaces(interfaces ...Interface) Option {
 	return newOption(func(options *options) {
 		intfs := make(map[string]mapset.Set)
 		for _, mv := range interfaces {

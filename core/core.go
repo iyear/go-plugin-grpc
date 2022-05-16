@@ -42,6 +42,8 @@ type pluginInfo struct {
 	comm pb.Conn_CommunicateServer
 }
 
+type Interface map[string][]string
+
 func New(token string, opts ...Option) *Core {
 	// TODO execTimeout 应当小于等于 serverOpts 的超时时间
 	c := Core{
