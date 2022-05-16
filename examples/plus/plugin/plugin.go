@@ -30,27 +30,27 @@ func main() {
 
 func plus(ctx plugin.Context) (map[string]interface{}, error) {
 	ctx.L().Info("enter math.v1.plus")
-	args := ctx.Args()
+	args := ctx.Map()
 	ctx.L().Info("finish plus func")
 
 	return map[string]interface{}{
-		"V": args["A"].(float64) + args["B"].(float64),
+		"V": args.GetInt("A") + args.GetInt("B"),
 	}, nil
 }
 
 func multiply(ctx plugin.Context) (map[string]interface{}, error) {
 	ctx.L().Info("enter math.v1.multiply")
-	args := ctx.Args()
+	args := ctx.Map()
 	ctx.L().Info("finish multiply func")
 
 	return map[string]interface{}{
-		"V": args["A"].(float64) * args["B"].(float64),
+		"V": args.GetInt("A") * args.GetInt("B"),
 	}, nil
 }
 
 func echo(ctx plugin.Context) (map[string]interface{}, error) {
-	text := ctx.Args()["Text"].(string)
-	//ctx.L().Debugf("echo %s", text)
+	text := ctx.Map().GetString("Text")
+	ctx.L().Debugf("echo %s", text)
 	return map[string]interface{}{
 		"Text": text,
 	}, nil

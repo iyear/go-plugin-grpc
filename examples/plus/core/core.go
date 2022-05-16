@@ -41,9 +41,9 @@ func main() {
 		"A": 2,
 		"B": 3,
 	})
-	call(c, "echo", map[string]interface{}{
-		"Text": "hello",
-	})
+	//call(c, "echo", map[string]interface{}{
+	//	"Text": "hello",
+	//})
 	select {}
 }
 
@@ -57,4 +57,5 @@ func call(c *core.Core, name string, args map[string]interface{}) {
 		return
 	}
 	fmt.Printf("result: %v, err: %v, time: %v\n", r, err, time.Since(start))
+	fmt.Printf("result: %d\n", r.Map().GetInt("V"))
 }
