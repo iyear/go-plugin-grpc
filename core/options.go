@@ -19,8 +19,8 @@ type options struct {
 	logger        Logger
 	execReqChSize int
 	execTimeout   time.Duration
-	interfaces    []mapset.Set // requires the plugin to implement functions that satisfy at least one interface. nil if no interfaces are required
-	logLevel      LogLevel     // TODO core log level
+	interfaces    map[string]mapset.Set // requires the plugin to implement functions that satisfy at least one interface. nil if no interfaces are required
+	logLevel      LogLevel              // TODO core log level
 }
 
 type option struct {
@@ -98,14 +98,18 @@ func WithServerOpts(opts ...grpc.ServerOption) Option {
 	})
 }
 
-func WithInterfaces(interfaces ...[]string) Option {
+func WithInterfaces(interfaces ...map[string][]string) Option {
 	return newOption(func(options *options) {
-		for _, str := range interfaces {
-			intf := mapset.NewSet()
-			for _, i := range str {
-				intf.Add(i)
+		intfs := make(map[string]mapset.Set)
+		for _, mv := range interfaces {
+			for k, v := range mv {
+				intf := mapset.NewSet()
+				for _, s := range v {
+					intf.Add(s)
+				}
+				intfs[k] = intf
 			}
-			options.interfaces = append(options.interfaces, intf)
 		}
+		options.interfaces = intfs
 	})
 }

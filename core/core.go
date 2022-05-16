@@ -36,6 +36,7 @@ type pluginInfo struct {
 	version  string
 	health   int64
 	shutdown chan struct{}
+	impl     string // name of plugin implementation
 	funcs    mapset.Set
 
 	comm pb.Conn_CommunicateServer
