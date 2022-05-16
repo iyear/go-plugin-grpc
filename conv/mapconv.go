@@ -1,11 +1,11 @@
-package converter
+package conv
 
 import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"sync"
 )
 
-type Converter struct {
+type MapConv struct {
 	spb *structpb.Struct
 	mu  sync.RWMutex
 }
@@ -25,92 +25,92 @@ type Converter struct {
 //	╚════════════════════════╧════════════════════════════════════════════╝
 //
 
-func New(spb *structpb.Struct) *Converter {
+func New(spb *structpb.Struct) *MapConv {
 	if spb.GetFields() == nil {
 		spb.Fields = make(map[string]*structpb.Value)
 	}
-	return &Converter{
+	return &MapConv{
 		spb: spb,
 		mu:  sync.RWMutex{},
 	}
 }
 
-func (c *Converter) String() string {
+func (c *MapConv) String() string {
 	return c.spb.String()
 }
 
-func (c *Converter) Get(key string) (*structpb.Value, bool) {
+func (c *MapConv) Get(key string) (*structpb.Value, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 	v, ok := c.spb.GetFields()[key]
 	return v, ok
 }
 
-func (c *Converter) MustGet(key string) *structpb.Value {
+func (c *MapConv) MustGet(key string) *structpb.Value {
 	if value, exists := c.Get(key); exists {
 		return value
 	}
 	panic("Key \"" + key + "\" does not exist")
 }
 
-func (c *Converter) GetInterface(key string) interface{} {
+func (c *MapConv) GetInterface(key string) interface{} {
 	if value, exists := c.Get(key); exists {
 		return value.AsInterface()
 	}
 	return nil
 }
 
-func (c *Converter) GetBool(key string) (b bool) {
+func (c *MapConv) GetBool(key string) (b bool) {
 	if val, ok := c.Get(key); ok && val != nil {
 		b = val.GetBoolValue()
 	}
 	return
 }
 
-func (c *Converter) GetString(key string) (s string) {
+func (c *MapConv) GetString(key string) (s string) {
 	if val, ok := c.Get(key); ok && val != nil {
 		s = val.GetStringValue()
 	}
 	return
 }
 
-func (c *Converter) GetFloat64(key string) (f float64) {
+func (c *MapConv) GetFloat64(key string) (f float64) {
 	if val, ok := c.Get(key); ok && val != nil {
 		f = val.GetNumberValue()
 	}
 	return
 }
 
-func (c *Converter) GetFloat32(key string) (f float32) {
+func (c *MapConv) GetFloat32(key string) (f float32) {
 	return float32(c.GetFloat64(key))
 }
 
-func (c *Converter) GetInt(key string) (i int) {
+func (c *MapConv) GetInt(key string) (i int) {
 	return int(c.GetFloat64(key))
 }
 
-func (c *Converter) GetInt64(key string) (i int64) {
+func (c *MapConv) GetInt64(key string) (i int64) {
 	return int64(c.GetFloat64(key))
 }
 
-func (c *Converter) GetInt32(key string) (i int32) {
+func (c *MapConv) GetInt32(key string) (i int32) {
 	return int32(c.GetFloat64(key))
 }
 
-func (c *Converter) GetUint(key string) (u uint) {
+func (c *MapConv) GetUint(key string) (u uint) {
 	return uint(c.GetFloat64(key))
 }
 
-func (c *Converter) GetUint32(key string) (u uint32) {
+func (c *MapConv) GetUint32(key string) (u uint32) {
 	return uint32(c.GetFloat64(key))
 }
 
-func (c *Converter) GetUint64(key string) (u uint64) {
+func (c *MapConv) GetUint64(key string) (u uint64) {
 	return uint64(c.GetFloat64(key))
 }
 
 // GetSliceIter return false to stop iteration
-func (c *Converter) GetSliceIter(key string, f func(v *structpb.Value) bool) {
+func (c *MapConv) GetSliceIter(key string, f func(v *structpb.Value) bool) {
 	if val, ok := c.Get(key); ok && val != nil {
 		if list := val.GetListValue(); list != nil {
 			for _, v := range list.GetValues() {
@@ -122,7 +122,7 @@ func (c *Converter) GetSliceIter(key string, f func(v *structpb.Value) bool) {
 	}
 }
 
-func (c *Converter) GetSlice(key string) []interface{} {
+func (c *MapConv) GetSlice(key string) []interface{} {
 	interfaces := make([]interface{}, 0)
 	c.GetSliceIter(key, func(v *structpb.Value) bool {
 		interfaces = append(interfaces, v.AsInterface())
