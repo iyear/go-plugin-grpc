@@ -12,11 +12,13 @@ func main() {
 	c := core.New("123",
 		core.WithLogLevel(core.LogLevelDebug),
 		core.WithPort(13001),
-		core.WithInterfaces([]string{
-			"plus",
-			// "multiply", if add multiply,plugin can not bind to core
-		}, []string{
-			"minus", "divide",
+		core.WithInterfaces(map[string][]string{
+			"Math": {
+				"plus", "multiply",
+			},
+			"String": {
+				"echo",
+			},
 		}),
 		core.WithExecReqChSize(5),
 		core.WithExecTimeout(time.Second*5),
@@ -30,19 +32,29 @@ func main() {
 	}()
 	// wait for plugin to start
 	time.Sleep(time.Second * 8)
-	call(c)
+
+	call(c, "plus", map[string]interface{}{
+		"A": 2,
+		"B": 3,
+	})
+	call(c, "multiply", map[string]interface{}{
+		"A": 2,
+		"B": 3,
+	})
+	call(c, "echo", map[string]interface{}{
+		"Text": "hello",
+	})
 	select {}
 }
 
-func call(c *core.Core) {
+func call(c *core.Core, name string, args map[string]interface{}) {
 	start := time.Now()
-	fmt.Println("start call: 2 + 3 = ?")
+	fmt.Printf("call %s, args: %v\n", name, args)
 	// Call Plugin
-	r, err := c.Call("math", "v1", "plus", map[string]interface{}{"A": 2, "B": 3})
+	r, err := c.Call("MyPlugin", "v1", name, args)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	fmt.Printf("call finished. result map: %v, err: %v\n", r, err)
-	fmt.Printf("result: %d ,time: %v\n", int(r["V"].(float64)), time.Since(start).String())
+	fmt.Printf("result: %v, err: %v, time: %v\n", r, err, time.Since(start))
 }
