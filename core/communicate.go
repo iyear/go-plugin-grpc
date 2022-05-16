@@ -37,7 +37,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 					return err
 				}
 
-				i.core.opts.logger.Logf("core", LogLevelInfo, "bind plugin %s.%s", p.name, p.version)
+				i.core.opts.logger.Logf("core", LogLevelInfo, "bind plugin [%s.%s],impl [%s] interface,funcs: %v", p.name, p.version, p.impl, p.funcs.String())
 				bound = true
 				plugin = p
 				plugin.health = time.Now().Unix() // init health time
@@ -90,21 +90,22 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*plugi
 		return nil, errors.New("invalid token")
 	}
 
-	// must impl one of the interfaces
+	// must impl only one of the interfaces
 	funcs := mapset.NewSet()
 	for _, f := range req.Functions {
 		funcs.Add(f)
 	}
+	implName := ""
 	if c.opts.interfaces != nil {
-		ok := false
-		for _, set := range c.opts.interfaces {
+		impls := 0
+		for name, set := range c.opts.interfaces {
 			if funcs.IsSuperset(set) {
-				ok = true
-				break
+				impls++
+				implName = name
 			}
 		}
-		if !ok {
-			return nil, errors.New("must implement one of the interfaces")
+		if impls != 1 {
+			return nil, fmt.Errorf("must implement only one of the interfaces")
 		}
 	}
 
@@ -120,6 +121,7 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*plugi
 		health:   0,
 		shutdown: make(chan struct{}, 0),
 		comm:     comm,
+		impl:     implName,
 		funcs:    funcs,
 	}
 	c.plugins.Store(key, &info)
