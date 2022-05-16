@@ -112,7 +112,7 @@ func (c *Core) ShutdownPlugin(plugin, version string) error {
 	return nil
 }
 
-// Shutdown TODO 先关闭其他插件，再关闭core
+// Shutdown core
 func (c *Core) Shutdown() {
 	c.cancel()
 	c.cron.Stop()
