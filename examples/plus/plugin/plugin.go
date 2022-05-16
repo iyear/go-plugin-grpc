@@ -16,9 +16,12 @@ func main() {
 	// if handle only plus, plugin can't bind to core because it doesn't impl any interface
 	// if handle plus and multiply, plugin can bind to core
 	// if handle plus, multiply and echo, plugin can't bind to core because it impls two interfaces
-	p.Handle("plus", plus)
-	p.Handle("multiply", multiply)
-	p.Handle("echo", echo)
+	//p.Handle("Plus", Plus)
+	//p.Handle("Multiply", Multiply)
+	p.Handle("EchoMap2Map", EchoMap2Map)
+	p.Handle("EchoMap2Bytes", EchoMap2Bytes)
+	p.Handle("EchoBytes2Map", EchoBytes2Map)
+	p.Handle("EchoBytes2Bytes", EchoBytes2Bytes)
 
 	if err := p.Mount("localhost", 13001); err != nil {
 		log.Println(err)
@@ -28,7 +31,7 @@ func main() {
 	select {}
 }
 
-func plus(ctx plugin.Context) (map[string]interface{}, error) {
+func Plus(ctx plugin.Context) (interface{}, error) {
 	ctx.L().Info("enter math.v1.plus")
 	args := ctx.Map()
 	ctx.L().Info("finish plus func")
@@ -38,20 +41,40 @@ func plus(ctx plugin.Context) (map[string]interface{}, error) {
 	}, nil
 }
 
-func multiply(ctx plugin.Context) (map[string]interface{}, error) {
+func Multiply(ctx plugin.Context) (interface{}, error) {
 	ctx.L().Info("enter math.v1.multiply")
 	args := ctx.Map()
-	ctx.L().Info("finish multiply func")
+	ctx.L().Info("multiply func finish")
 
 	return map[string]interface{}{
 		"V": args.GetInt("A") * args.GetInt("B"),
 	}, nil
 }
 
-func echo(ctx plugin.Context) (map[string]interface{}, error) {
+func EchoMap2Map(ctx plugin.Context) (interface{}, error) {
 	text := ctx.Map().GetString("Text")
-	ctx.L().Debugf("echo %s", text)
+	ctx.L().Debugf("echo|arg:map|result:map|arg:%v", text)
 	return map[string]interface{}{
 		"Text": text,
 	}, nil
+}
+
+func EchoMap2Bytes(ctx plugin.Context) (interface{}, error) {
+	text := ctx.Map().GetString("Text")
+	ctx.L().Debugf("echo|arg:map|result:bytes|arg:%v", text)
+	return []byte(text), nil
+}
+
+func EchoBytes2Map(ctx plugin.Context) (interface{}, error) {
+	text := ctx.Bytes()
+	ctx.L().Debugf("echo|arg:bytes|result:map|arg:%v", text)
+	return map[string]interface{}{
+		"Text": string(text),
+	}, nil
+}
+
+func EchoBytes2Bytes(ctx plugin.Context) (interface{}, error) {
+	text := ctx.Bytes()
+	ctx.L().Debugf("echo|arg:bytes|result:bytes|arg:%v", text)
+	return text, nil
 }
