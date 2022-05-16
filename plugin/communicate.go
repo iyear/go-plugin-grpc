@@ -3,9 +3,9 @@ package plugin
 import (
 	"context"
 	"fmt"
+	"github.com/iyear/go-plugin-grpc/internal/codec"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func (p *Plugin) recv(ctx context.Context) error {
@@ -34,9 +34,8 @@ func (p *Plugin) exec(data []byte) {
 		return
 	}
 
-	result, err := p.execFunc(&req)
+	resp, err := p.execFunc(&req)
 
-	resp := &pb.CommunicateExecResponse{}
 	if err != nil {
 		t := err.Error()
 		s := &t
@@ -44,17 +43,6 @@ func (p *Plugin) exec(data []byte) {
 			ID:     req.ID,
 			Result: nil,
 			Err:    s,
-		}
-	} else {
-		respb, err := structpb.NewStruct(result)
-		if err != nil {
-			p.Log.Errorf("communicate exec result marshal error: %v", err)
-			return
-		}
-		resp = &pb.CommunicateExecResponse{
-			ID:     req.ID,
-			Result: respb,
-			Err:    nil,
 		}
 	}
 
@@ -74,18 +62,34 @@ func (p *Plugin) exec(data []byte) {
 }
 
 //exec 执行函数
-func (p *Plugin) execFunc(req *pb.CommunicateExecRequest) (map[string]interface{}, error) {
+func (p *Plugin) execFunc(req *pb.CommunicateExecRequest) (*pb.CommunicateExecResponse, error) {
 	f, ok := p.handlers.Load(req.FuncName)
 	if !ok {
 		return nil, fmt.Errorf("func %s not found", req.FuncName)
 	}
+
+	union, err := codec.Decode(req.Args, req.Type)
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := f.(HandlerFunc)(&nativeCtx{
-		plugin:  p,
-		argsMap: req.Args,
+		plugin: p,
+		Union:  union,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	bytes, t, err := codec.Encode(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CommunicateExecResponse{
+		ID:     req.ID,
+		Type:   t,
+		Result: bytes,
+		Err:    nil,
+	}, nil
 }

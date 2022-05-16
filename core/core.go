@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	mapset "github.com/deckarep/golang-set"
+	"github.com/iyear/go-plugin-grpc/internal/codec"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
 	"github.com/iyear/go-plugin-grpc/internal/util"
 	"github.com/robfig/cron/v3"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/structpb"
 	"net"
 	"sync"
 	"time"
@@ -128,7 +128,7 @@ func (c *Core) Shutdown() {
 // Call blocks until the func is executed or timeout
 //
 // args can be map[string]interface{} or []byte
-func (c *Core) Call(plugin, version, funcName string, args map[string]interface{}) (Result, error) {
+func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result, error) {
 	p, ok := c.plugins.Load(util.GenKey(plugin, version))
 	if !ok {
 		return nil, fmt.Errorf("plugin %s not found", plugin)
@@ -145,31 +145,15 @@ func (c *Core) Call(plugin, version, funcName string, args map[string]interface{
 	respCh := make(chan execResp, 0)
 	c.execResp.Store(id, respCh)
 
-	// TODO support map[string]interface{} and []byte
-	//var req *anypb.Any
-	//switch t := args.(type) {
-	//case map[string]interface{}:
-	//	reqpb, err := structpb.NewStruct(t)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	if req, err = anypb.New(reqpb); err != nil {
-	//		return nil, err
-	//	}
-	//case []byte:
-	//
-	//default:
-	//	return nil, fmt.Errorf("args type error")
-	//}
-
-	argspb, err := structpb.NewStruct(args)
+	bytes, t, err := codec.Encode(args)
 	if err != nil {
 		return nil, err
 	}
 	b, err := proto.Marshal(&pb.CommunicateExecRequest{
 		ID:       id,
 		FuncName: funcName,
-		Args:     argspb,
+		Type:     t,
+		Args:     bytes,
 	})
 	// failed to marshal
 	if err != nil {
@@ -191,14 +175,16 @@ func (c *Core) Call(plugin, version, funcName string, args map[string]interface{
 	case <-timer.C:
 		return nil, fmt.Errorf("exec %s.%s.%s timeout", plugin, version, funcName)
 	case result := <-respCh:
-		// TODO log info result
 		if result.Err != nil {
 			return nil, errors.New(*result.Err)
 		}
 
+		union, err := codec.Decode(result.Result, result.Type)
+		if err != nil {
+			return nil, err
+		}
 		return &nativeResult{
-			resultMap: result.Result,
-			bytes:     make([]byte, 0), // TODO support map[string]interface{} and []byte
+			Union: union,
 		}, nil
 	}
 }

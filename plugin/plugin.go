@@ -11,7 +11,7 @@ type Logger struct {
 	plugin *Plugin
 }
 
-type HandlerFunc func(ctx Context) (map[string]interface{}, error)
+type HandlerFunc func(ctx Context) (interface{}, error)
 
 type Plugin struct {
 	conn     *grpc.ClientConn // grpc connection

@@ -154,6 +154,7 @@ func (c *Core) recvExecResp(resp *pb.CommunicateExecResponse) error {
 			CommunicateExecResponse: &pb.CommunicateExecResponse{
 				ID:     resp.ID,
 				Result: resp.Result,
+				Type:   resp.Type,
 				Err:    resp.Err,
 			}}
 
