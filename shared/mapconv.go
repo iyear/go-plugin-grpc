@@ -1,4 +1,4 @@
-package conv
+package shared
 
 import (
 	"google.golang.org/protobuf/types/known/structpb"
@@ -25,7 +25,7 @@ type MapConv struct {
 //	╚════════════════════════╧════════════════════════════════════════════╝
 //
 
-func New(spb *structpb.Struct) *MapConv {
+func NewMapConv(spb *structpb.Struct) *MapConv {
 	if spb.GetFields() == nil {
 		spb.Fields = make(map[string]*structpb.Value)
 	}
@@ -37,6 +37,10 @@ func New(spb *structpb.Struct) *MapConv {
 
 func (c *MapConv) String() string {
 	return c.spb.String()
+}
+
+func (c *MapConv) Map() map[string]interface{} {
+	return c.spb.AsMap()
 }
 
 func (c *MapConv) Get(key string) (*structpb.Value, bool) {

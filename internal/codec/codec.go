@@ -2,7 +2,6 @@ package codec
 
 import (
 	"fmt"
-	"github.com/iyear/go-plugin-grpc/conv"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
 	"github.com/iyear/go-plugin-grpc/shared"
 	"google.golang.org/protobuf/proto"
@@ -34,11 +33,11 @@ type Union struct {
 	ctype pb.EncodeType
 }
 
-func (u *Union) Map() *conv.MapConv {
+func (u *Union) Map() *shared.MapConv {
 	if u.ctype != pb.EncodeType_Map {
 		panic("type is not map")
 	}
-	return conv.New(u.smap)
+	return shared.NewMapConv(u.smap)
 }
 
 func (u *Union) Bytes() []byte {
