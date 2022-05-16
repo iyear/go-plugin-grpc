@@ -126,7 +126,7 @@ func (c *Core) Shutdown() {
 // Call blocks until the func is executed or timeout
 //
 // args can be map[string]interface{} or []byte
-func (c *Core) Call(plugin, version, funcName string, args map[string]interface{}) (map[string]interface{}, error) {
+func (c *Core) Call(plugin, version, funcName string, args map[string]interface{}) (Result, error) {
 	p, ok := c.plugins.Load(util.GenKey(plugin, version))
 	if !ok {
 		return nil, fmt.Errorf("plugin %s not found", plugin)
@@ -194,6 +194,9 @@ func (c *Core) Call(plugin, version, funcName string, args map[string]interface{
 			return nil, errors.New(*result.Err)
 		}
 
-		return result.Result.AsMap(), nil
+		return &nativeResult{
+			resultMap: result.Result,
+			bytes:     make([]byte, 0), // TODO support map[string]interface{} and []byte
+		}, nil
 	}
 }

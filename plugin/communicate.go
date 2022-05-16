@@ -80,8 +80,8 @@ func (p *Plugin) execFunc(req *pb.CommunicateExecRequest) (map[string]interface{
 		return nil, fmt.Errorf("func %s not found", req.FuncName)
 	}
 	result, err := f.(HandlerFunc)(&nativeCtx{
-		plugin: p,
-		args:   req.Args.AsMap(),
+		plugin:  p,
+		argsMap: req.Args,
 	})
 	if err != nil {
 		return nil, err
