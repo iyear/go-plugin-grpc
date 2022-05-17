@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/iyear/go-plugin-grpc/plugin"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"time"
 )
@@ -12,7 +13,7 @@ func main() {
 	p := plugin.New("MyPlugin", "v1", "123",
 		plugin.WithLogLevel(plugin.LogLevelDebug),
 		plugin.WithHeartbeat(10*time.Second),
-		plugin.WithDialOpts(grpc.WithInsecure()))
+		plugin.WithDialOpts(grpc.WithTransportCredentials(insecure.NewCredentials())))
 
 	// if handle only plus, plugin can't bind to core because it doesn't impl any interface
 	// if handle plus and multiply, plugin can bind to core
