@@ -35,9 +35,7 @@ func defaultOpts() options {
 		callOpts:  make([]grpc.CallOption, 0),
 		heartbeat: time.Second * 10,
 		logLevel:  pb.LogLevel_Info,
-		onPanic: func(plugin *Plugin, execID uint64, funcName string, err error) {
-			plugin.Log.Errorf("exec func %s(%d) panic: %v", funcName, execID, err)
-		},
+		onPanic:   func(plugin *Plugin, execID uint64, funcName string, err error) {},
 	}
 }
 
