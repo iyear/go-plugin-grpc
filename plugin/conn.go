@@ -96,6 +96,9 @@ func (p *Plugin) Shutdown(reason UnbindReason, msg *string) []error {
 	// 关闭连接
 	errs := make([]error, 0)
 
+	if err := p.unbind(reason, msg); err != nil {
+		errs = append(errs, err)
+	}
 	if p.conn != nil {
 		if err := p.conn.Close(); err != nil {
 			errs = append(errs, err)

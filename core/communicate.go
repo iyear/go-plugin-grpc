@@ -1,11 +1,8 @@
 package core
 
 import (
-	"errors"
 	"fmt"
-	mapset "github.com/deckarep/golang-set"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
-	"github.com/iyear/go-plugin-grpc/internal/util"
 	"google.golang.org/protobuf/proto"
 	"strings"
 	"time"
@@ -82,87 +79,4 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 			}
 		}
 	}
-}
-
-func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*pluginInfo, error) {
-	// invalid token, disconnect
-	if req.Token != c.token {
-		return nil, errors.New("invalid token")
-	}
-
-	// must impl only one of the interfaces
-	funcs := mapset.NewSet()
-	for _, f := range req.Functions {
-		funcs.Add(f)
-	}
-	implName := ""
-	if c.opts.interfaces != nil {
-		impls := 0
-		for name, set := range c.opts.interfaces {
-			if funcs.IsSuperset(set) {
-				impls++
-				implName = name
-			}
-		}
-		if impls != 1 {
-			return nil, fmt.Errorf("must implement only one of the interfaces")
-		}
-	}
-
-	key := util.GenKey(req.Name, req.Version)
-	if _, ok := c.plugins.Load(key); ok {
-		// 已存在插件断开连接
-		return nil, fmt.Errorf("plugin %s.%s is exists", req.Name, req.Version)
-	}
-
-	info := pluginInfo{
-		name:     req.Name,
-		version:  req.Version,
-		health:   0,
-		shutdown: make(chan struct{}, 0),
-		comm:     comm,
-		impl:     implName,
-		funcs:    funcs,
-	}
-	c.plugins.Store(key, &info)
-	return &info, nil
-}
-
-func (c *Core) unbind(req *pb.UnbindRequest) error {
-	if c.token != req.Token {
-		return errors.New("invalid token")
-	}
-	key := util.GenKey(req.Name, req.Version)
-	if _, ok := c.plugins.Load(key); !ok {
-		return fmt.Errorf("plugin %s.%s is not exists", req.Name, req.Version)
-	}
-	c.plugins.Delete(key)
-	return nil
-}
-
-func (c *Core) recvExecResp(resp *pb.CommunicateExecResponse) error {
-	exec, ok := c.execResp.Load(resp.ID)
-	if !ok {
-		return fmt.Errorf("exec response channel not found: %d", resp.ID)
-	}
-
-	go func() {
-		timer := time.NewTimer(time.Second * 5)
-		defer timer.Stop()
-
-		r := execResp{
-			CommunicateExecResponse: &pb.CommunicateExecResponse{
-				ID:     resp.ID,
-				Result: resp.Result,
-				Type:   resp.Type,
-				Err:    resp.Err,
-			}}
-
-		select {
-		case <-timer.C:
-		case exec.(chan execResp) <- r:
-		}
-	}()
-
-	return nil
 }
