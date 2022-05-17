@@ -14,6 +14,7 @@ func (p *Plugin) exec(data []byte) {
 		return
 	}
 
+	defer p.recoverExec(&req)
 	resp, err := p.execFunc(&req)
 
 	if err != nil {
@@ -21,6 +22,7 @@ func (p *Plugin) exec(data []byte) {
 		s := &t
 		resp = &pb.CommunicateExecResponse{
 			ID:     req.ID,
+			Type:   req.Type,
 			Result: nil,
 			Err:    s,
 		}
@@ -38,6 +40,33 @@ func (p *Plugin) exec(data []byte) {
 	}); err != nil {
 		p.Log.Errorf("communicate send exec response error: %v", err)
 		return
+	}
+}
+
+func (p *Plugin) recoverExec(req *pb.CommunicateExecRequest) {
+	if r := recover(); r != nil {
+		p.opts.onPanic(p, req.ID, req.FuncName, fmt.Errorf("%v", r))
+		// TODO refactor
+		t := fmt.Errorf("panic: %v", r).Error()
+		msg, err := proto.Marshal(&pb.CommunicateExecResponse{
+			ID:     req.ID,
+			Type:   req.Type,
+			Result: nil,
+			Err:    &t,
+		})
+		if err != nil {
+			p.Log.Errorf("communicate marshal exec response error: %v", err)
+			return
+
+		}
+
+		if err = p.clients.comm.Send(&pb.CommunicateMsg{
+			Type: pb.CommunicateType_ExecResponse,
+			Data: msg,
+		}); err != nil {
+			p.Log.Errorf("communicate send exec response error: %v", err)
+			return
+		}
 	}
 }
 

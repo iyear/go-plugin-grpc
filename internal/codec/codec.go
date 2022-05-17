@@ -9,6 +9,10 @@ import (
 )
 
 func Encode(v interface{}) ([]byte, pb.CodecType, error) {
+	if v == nil {
+		return nil, pb.CodecType_Bytes, nil
+	}
+
 	switch t := v.(type) {
 	case map[string]interface{}:
 		bytes := make([]byte, 0)
@@ -63,6 +67,10 @@ func (u *Union) String() string {
 }
 
 func Decode(bytes []byte, t pb.CodecType) (*Union, error) {
+	if bytes == nil {
+		return &Union{ctype: t}, nil
+	}
+
 	switch t {
 	case pb.CodecType_Map:
 		r := structpb.Struct{}

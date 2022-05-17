@@ -16,6 +16,7 @@ type options struct {
 
 	heartbeat time.Duration
 	logLevel  pb.LogLevel
+	onPanic   func(plugin *Plugin, execID uint64, funcName string, err error)
 }
 
 type option struct {
@@ -34,6 +35,9 @@ func defaultOpts() options {
 		callOpts:  make([]grpc.CallOption, 0),
 		heartbeat: time.Second * 10,
 		logLevel:  pb.LogLevel_Info,
+		onPanic: func(plugin *Plugin, execID uint64, funcName string, err error) {
+			plugin.Log.Errorf("exec func %s(%d) panic: %v", funcName, execID, err)
+		},
 	}
 }
 
@@ -60,5 +64,12 @@ func WithDialOpts(opts ...grpc.DialOption) Option {
 func WithCallOpts(opts ...grpc.CallOption) Option {
 	return newOption(func(options *options) {
 		options.callOpts = opts
+	})
+}
+
+//WithOnPanic default is Log.Errorf
+func WithOnPanic(f func(plugin *Plugin, execID uint64, funcName string, err error)) Option {
+	return newOption(func(options *options) {
+		options.onPanic = f
 	})
 }

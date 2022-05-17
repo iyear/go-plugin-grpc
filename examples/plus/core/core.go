@@ -33,22 +33,24 @@ func main() {
 	// wait for plugin to start
 	time.Sleep(time.Second * 8)
 
-	call(c, "Plus", map[string]interface{}{
-		"A": 2,
-		"B": 3,
-	})
-	call(c, "Multiply", map[string]interface{}{
-		"A": 2,
-		"B": 3,
-	})
-	call(c, "EchoMap2Map", map[string]interface{}{
-		"Text": "hello",
-	})
-	call(c, "EchoMap2Bytes", map[string]interface{}{
-		"Text": "hello",
-	})
-	call(c, "EchoBytes2Map", []byte("hello"))
-	call(c, "EchoBytes2Bytes", []byte("hello"))
+	//call(c, "Plus", map[string]interface{}{
+	//	"A": 2,
+	//	"B": 3,
+	//})
+	//call(c, "Multiply", map[string]interface{}{
+	//	"A": 2,
+	//	"B": 3,
+	//})
+	//call(c, "EchoMap2Map", map[string]interface{}{
+	//	"Text": "hello",
+	//})
+	//call(c, "EchoMap2Bytes", map[string]interface{}{
+	//	"Text": "hello",
+	//})
+	//call(c, "EchoBytes2Map", []byte("hello"))
+	//call(c, "EchoBytes2Bytes", []byte("hello"))
+
+	call(c, "Panic", nil)
 	select {}
 }
 

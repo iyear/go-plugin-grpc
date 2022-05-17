@@ -77,8 +77,8 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 
 	// exec timeout
 	timer := time.NewTimer(c.opts.execTimeout)
-	defer timer.Stop()
 	defer func() {
+		timer.Stop()
 		close(respCh)
 		c.execResp.Delete(id)
 	}()

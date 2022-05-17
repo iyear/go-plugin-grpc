@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/iyear/go-plugin-grpc/plugin"
 	"google.golang.org/grpc"
 	"log"
@@ -22,6 +23,7 @@ func main() {
 	p.Handle("EchoMap2Bytes", EchoMap2Bytes)
 	p.Handle("EchoBytes2Map", EchoBytes2Map)
 	p.Handle("EchoBytes2Bytes", EchoBytes2Bytes)
+	p.Handle("Panic", Panic)
 
 	if err := p.Mount("localhost", 13001); err != nil {
 		log.Println(err)
@@ -77,4 +79,9 @@ func EchoBytes2Bytes(ctx plugin.Context) (interface{}, error) {
 	text := ctx.Bytes()
 	ctx.L().Debugf("echo|arg:bytes|result:bytes|arg:%v", text)
 	return text, nil
+}
+
+func Panic(ctx plugin.Context) (interface{}, error) {
+	ctx.L().Debug("I will panic")
+	panic(fmt.Errorf("panic info"))
 }
