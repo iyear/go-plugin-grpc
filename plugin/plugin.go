@@ -59,3 +59,32 @@ func New(name, ver, token string, opts ...Option) *Plugin {
 func (p *Plugin) Handle(funcName string, handler HandlerFunc) {
 	p.handlers.Store(funcName, handler)
 }
+
+func (p *Plugin) Name() string {
+	return p.name
+}
+
+func (p *Plugin) Version() string {
+	return p.version
+}
+
+func (p *Plugin) Token() string {
+	return p.token
+}
+
+func (p *Plugin) Status() Status {
+	return Status(p.status)
+}
+
+func (p *Plugin) Funcs() []string {
+	funcs := make([]string, 0)
+	p.handlers.Range(func(key, _ interface{}) bool {
+		funcs = append(funcs, key.(string))
+		return true
+	})
+	return funcs
+}
+
+func (p *Plugin) SetLogLevel(l LogLevel) {
+	p.opts.logLevel = pb.LogLevel(l)
+}
