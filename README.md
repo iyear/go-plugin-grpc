@@ -1,23 +1,15 @@
-## Go Plugin over gRPC
+## 简介
+`Go Plugin over gRPC` 是一个轻量级的 `Golang` 双向通信插件框架，内置健康检查、插件管理、日志汇集等扩展功能。
 
-施工中，非生产可用
+框架轻量且非常易于使用，你只需要花费一点时间即可迁移已有的插件实现，或者从零开始建立自己的插件系统。
 
-你可以自由地分发使用该框架
+## 快速开始
+我们首先实现一个简单的数学插件，支持加法和乘法。
 
-example: [plus](./examples/plus)
+core.go:
+```go
 
-在 `Core` 端可以看到类似如下输出：
+
 ```
-2022/05/15 23:48:09 core [INFO] bind plugin math.v1
-2022/05/15 23:48:10 core [DEBUG] checking health of plugin math.v1: 1652629689/1652629675
-2022/05/15 23:48:12 core [DEBUG] checking health of plugin math.v1: 1652629689/1652629677
-2022/05/15 23:48:14 core [DEBUG] checking health of plugin math.v1: 1652629689/1652629679
-start call: 2 + 3 = ?
-2022/05/15 23:48:14 math.v1 [INFO] enter math.v1.plus
-2022/05/15 23:48:14 math.v1 [INFO] finish plus func
-call finished. result map: map[V:5], err: <nil>
-result: 5 ,time: 1.0838ms
-2022/05/15 23:48:16 core [DEBUG] checking health of plugin math.v1: 1652629689/1652629681
-2022/05/15 23:48:18 core [DEBUG] checking health of plugin math.v1: 1652629689/1652629683
-2022/05/15 23:48:20 core [DEBUG] checking health of plugin math.v1: 1652629699/1652629685
-```
+
+
