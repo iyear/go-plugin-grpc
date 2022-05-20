@@ -41,13 +41,15 @@
 
 以下为详细方案实现：
 
+**注意：框架运行的前提为 `Core` `Plugin` 互相信任，无恶意开发者。框架不会着力解决合法性问题**
+
 ### 核心概念
 
-了解核心概念有利于把握整体。方案中的核心概念并不多，且非常容易理解，设计的一切都在保证“轻量”目标。
+了解核心概念有利于把握整体。方案中的核心概念并不多，且非常容易理解，设计方案努力保证“轻量”“易用”的目标。
 
 #### Core
 
-`Core` 为宿主，它是一个项目的核心实现，主要包含项目逻辑，基本不包含业务逻辑。开发者、用户通过 `Core` 调用插件中的函数。`Core` 被设计为 `Server` 。
+`Core` 为宿主，它是一个项目的核心实现，主要包含项目逻辑，基本不包含具体业务逻辑。开发者、用户通过 `Core` 调用插件中的函数。`Core` 被设计为 `Server` 。
 
 #### Plugin
 
@@ -55,64 +57,255 @@ Plugin 为插件，它实现了 `Core` 所需的具体业务逻辑。`Plugin` �
 
 #### Convention/约定
 
-设计方案倾向于“约定”而非“约束”，如果想和 `go-plugin` 一样做到强约束，开发者必须付出大量时间对约束性做出封装。而对于一个小型、轻量的项目，约束应当只是可选项。`Core` 与 `Plugin` 之间的插件名、版本、函数名、参数类型、结果类型应尽可能先约定，后约束。
+设计方案**倾向于“约定”而非“约束”**，如果想和 `go-plugin` 一样做到强约束，开发者必须付出大量时间对约束性做出封装。而对于一个小型、轻量的项目，约束应当只是可选项。`Core` 与 `Plugin` 之间的插件名、版本、函数名、参数类型、结果类型应尽可能先约定，后约束。
 
-当然，对于一个大型项目，“约束”不应当被完全抛弃。下文将说明框架如何使用实现一定的约束性。
+当然，对于一个大型项目，**“约束”不应当被完全抛弃**。下文将说明框架如何实现一定的约束性。
 
 #### Interface
 
-`Core` 可以定义多个 `interfce` 。相似但不同于 `Golang` 中的 `interface` ，为了贯彻单一职责，一个 `Plugin` 只允许实现 `Core` 的一个接口，履行一项职责。
+`Core` 可以定义多个 `interfce` 。相似但不同于 `Golang` 中的 `interface` ，为了贯彻单一职责，**一个 `Plugin` 只允许实现 `Core` 的一个接口，履行一项职责。**
 
 #### Func/Handler
 
-在 `Plugin` 执行 `Mount` 前，所有注册的业务逻辑函数被称为 `Func/Handler` 。函数签名为 `func(ctx plugin.Context) (interface{}, error)` 。其接收来自 `Core` 的参数，进行处理后将结果返回给 `Plugin` ，`Plugin` 帮助它向 `Core` 发送结果。
+在 `Plugin` 注册的业务逻辑函数被称为 `Func/Handler` 。函数签名为 `func(ctx plugin.Context) (interface{}, error)` 。其接收来自 `Core` 的参数，进行处理后将结果返回给 `Plugin` ，`Plugin` 替它向 `Core` 发送结果。
 
-### 选型
+### 协议
 
 - `gRPC Bidirectional Streaming` 为 `Main Stream` ，用于传输除 `Log` 以外的所有消息。
 - `gRPC Client-Side Streaming` 为 `Log Stream`，只用于传输 `Plugin Log`。
-- `ProtoBuf` 为所有消息的序列化协议。
+- `ProtoBuf` 为传输消息的序列化协议。
 
 ### 架构图
 
-<img src="arch.png" width="500px"  alt="arch"/>
+<img src="arch.png" alt="arch"/>
 
-`Core` 包含以下组件/设置：
+`Core` 包含以下组件：
 
-- `Plugins Manager` 。记录 `Plugin` 信息与状态，一旦 `Plugin` `Mount` 到 `Core` ，`Plugins Manager` 将对 `Plugin` 拥有全管理权。
-- `gRPC Server` 。承载起 `Core` 与所有 `Plugin` 的通信，支持一系列设置
-- `Mount `
-- `Log Hub`。负责收集 
-- `Health Check Cron`。健康检查定时任务，`Core` 将定时检查 `Plugin` 健康状态。
-- `Developer Hook`。框架使用者可以对框架内
+- `Plugins Manager` ： 记录 `Plugin` 信息、状态，拥有管理权。
+- `gRPC Server` ：承载起 `Core` 与所有 `Plugin` 的通信。
+- `Mount Validation` ： 对于 `Mount` 过程， `Core` 有复杂的合法性校验过程。
+- `Log Hub` ：负责收集 `Plugin` 日志并与 `Core` 日志统一处理。
+- `Health Check Cron` ：健康检查定时任务，`Core` 将定时检查 `Plugin` 健康状态。
+- `Developer Hook` ：框架使用者可以对框架内诸多事件进行外部监听。
 
-### `ProtoBuf` 设计
+`Plugin` 包含以下组件：
 
-<img src="communicate-proto.png" width="500px"  alt="communicate-proto"/>
-
-在 `Communicate Stream` 中，所有消息均被 `Communicate Msg` 包装，`Type` 字段定义此次消息类型，`Core` `Plugin` 根据消息类型做出特定
-
-<img src="log-proto.png" width="300px"  alt="log-proto"/>
-
-
+- `Handlers` ：在初始化阶段，`Plugin` 开发者注册需要暴露的函数，全部保存在 `Handlers` 中。
+- `gRPC Conns` ：承载起 `Plugin` 与 `Core` 的通信。
+- `Log Service` ：所有由此发起的日志消息全部被 `Core` 收集并处理。
+- `Ping Cron` ：定时向 `Core` 发起一次通信保持存活状态。
 
 ### `Core`-`Plugin` 生命周期
 
-<img src="life-circle.png" width="500px"  alt="life-circle"/>
+<img src="life-circle.png" alt="life-circle"/>
 
-### 方案详细描述
+`Core` 与 `Plugin` 的交互过程是复杂的但有效的，不过框架已经解决了这些繁琐的事情，开发者只需要关注插件逻辑编写。
 
-**注意：框架完美运行的前提为 `Core` `Plugin` 互相信任，即 `Core` 只对 `Plugin` 的 `Mount` `Unmount` 阶段做合法性校验，之后的内容传输将完全信任**
+以下为 `Core` 与 `Plugin` 的一次交互全过程，具体消息体说明请参考 “ProtoBuf设计” 部分。
 
-#### Mount
+#### 1. Core.Serve
 
-`Plugin` 
+`Core` 首先启动自身，对指定端口开始监听，等待 `Plugin` 向自身发起请求。
+
+同时启动 `HealthCheck` 定时任务，对 `Plugins Manager` 记录的 `Plugin` 开展健康检查。
+
+#### 2.Plugin.Mount
+
+`Plugin` 由上层以任何方式启动，携带自身信息向 `Core` 发起 `Communicate Stream` 连接，随后立即发送 `protobuf.Communicate.MountRequest` 消息。
+
+若合法性校验未通过，`Core` 直接断开 `Communicate Stream` 连接。
+
+若合法性校验通过，`Plugin` 将再次发起请求建立另一条 `Log Stream` 连接用于发送日志。
+
+至此，`Plugin` 成功 `Mount` 至 `Core` ，`Plugins Manager` 将记录所有信息并接管该 `Plugin`。
+
+**注意：在 `Plugin` 成功 `Mount` 前，其他任何消息都会被直接丢弃。**
+
+#### 3.  Plugin.Ping
+
+成功 `Mount` 后，`Plugin` 立即启动 `Heartbeat` 定时任务，定时向 `Core` 汇报自身信息和存活状态，发送 `protobuf.Communicate.Ping` 消息。
+
+若 `Plugin` 心跳丢失，将被 `Plugins Manager` 移除并断开连接，`Core` 请求调用时将直接返回 `Plugin Not Found` 错误。只有再次发起 `protobuf.Communicate.MountRequest` 才可以重新被接管。
+
+#### 4. Plugin.Log
+
+`Plugin` 通过 `Log Stream` 发送 `protobuf.Log.LogInfo` 消息记录日志。所有日志经过内部 `LogLevel` 筛选后向 `Core` 汇聚，由 `Core` 统一处理。
+
+框架为 `Plugin` 提供了 `Log Service` ，封装了整个日志发送过程，也是插件开发者推荐使用的日志方式。
+
+#### 5. Core.ExecRequest
+
+`Core` 使用 `sync.Map` 存储所有 `Exec` 结果，其可读形式为 `map[ExecID]ExecRespChannel`。
+
+`Core` 将为一次 `Call` 调用配置 `ExecID` ，新建 `ExecRespChannel` 存入 `sync.Map` ，向指定 `Plugin` 发送 `protobuf.ExecRequest` 消息体。
+
+`Call` 函数被 `RespChannel` 阻塞，并等待 `Plugin` 执行函数后返回结果。
+
+#### 6.Plugin.ExecResponse
+
+若成功返回结果，对 `sync.Map[ExecID]` 的 `ExecRespChannel` 传入执行响应。`Call` 函数恢复，向上层返回结果。
+
+若执行时间大于 `Core.opts.ExecTimeout` ，直接返回 `exec timeout` 错误。
+
+无论结果，`Core` 都将对资源进行回收、删除。
+
+#### 7.Plugin.Unmount && Core.Shutdown
+
+效果均为 `Plugin` 被 `Plugins Manager` 移除。
+
+区别： `Unbind` 为 `Plugin` 因自身原因主动退出， `Shutdown` 为 `Core` 强制移除 `Plugin`
+
+### `ProtoBuf` 设计
+
+<img src="communicate-proto.png" alt="communicate-proto"/>
+
+在 `Communicate Stream` 中，所有消息均被 `Communicate Msg` 包装，`Type` 字段定义此次消息类型，`Core` 与 `Plugin` 根据消息类型做出指定动作。
+
+以下为主要消息体设计说明：
+
+#### MountRequest(挂载请求)
+
+- `Token` ：与 `Core` 提前约定的连接令牌。
+- `Name` ：插件名。用于标识插件、日志输出显示。
+- `Version` ：插件版本。`Name` + `Version` 对于一个 `Core` 须全局唯一。
+- `Functions` ：插件开发者注册的函数列表，用于验证 `Core Interface` 。
+
+#### UnmountRequest(卸载请求)
+
+- `Reason` ：卸载理由。
+- `Token` ：卸载令牌，同 `MountRequest` 中的 `Token`。
+- `Msg` ：可选的附加信息。
+
+`Reason` + `Msg` 用于为 `Core` 提供有效易读的卸载信息。
+
+#### ExecRequest(执行请求)
+
+- `ID ` ：执行ID，用于全局唯一标识此次执行请求。
+- `FuncName` ： 执行函数名，指向 `Handlers` 中存在的函数。
+- `Type` ：“参数”编码类型。目前支持 `Map(map[string]interface{})` 与 `Bytes([]byte)` ，由 `codec` 包控制，已预留扩展性。
+- `Payload` ：编码后的数据负载。
+  - `Map` ：当前由 `google/protobuf/struct.proto` 实现序列化、反序列化。但是数字类型在实际传输过程中会被转换为 `float64`，导致原有精度丢失。适合轻量、约定为主、数字敏感度低的项目使用。
+  - `Bytes` ：为开发者提供了自由选择序列化协议的渠道。例如：开发者可以自己定义具体业务的 `protobuf messages` ，在 `Core` `Plugin` 两侧自行实现序列化/反序列化。
+  - 更多传输类型将被支持。**未来将选择适当的序列化协议，例如 `msgpack` `Thrift` 等，解决目前 `Map` 存在的精度问题。**同时底层序列化协议的修改不会影响上层开发者使用。
+
+
+#### ExecResponse(执行响应)
+
+- `ID` ：执行ID，用于全局唯一标识此次执行请求。同 `ExecRequest` 的 `ID` 。
+- `Type` ：“结果”编码类型。同 `ExecRequest` 的 `Type` 。
+- `Result` ：“结果”编码类型。同  `ExecRequest` 的 `Payload` 。
+- `Err` ：函数错误(可选)。函数执行后若返回 `err != nil` ，在通信层面将携带此字段，最终由 `Core` 返回给上层。
 
 
 
+<img src="log-proto.png" alt="log-proto"/>
 
+在 `Log Stream` 中，目前只有 `LogInfo` 一种消息体。将日志传输单独设为一条连接，避免大量日志传输影响主连接“调用函数”的性能。
 
+#### LogInfo
 
+- `Level` ：可以为 `Debug` `Info` `Warn` `Error` 。
+- `Message` ：日志内容。
+
+### Codec  与 Getter 设计
+
+#### Codec Interface 设计
+
+编码类型解耦出 `codec` 包，负责 `Args` `Result` 的底层编解码。
+
+```go
+// package plugin
+type HandlerFunc func(ctx Context) (interface{}, error)
+
+type Context interface {
+	Plugin() *Plugin        // get self
+	Map() *shared.MapConv   // get MapConv when args.CodecType = Map
+	Bytes() []byte          // get Bytes when args.CodeType = Bytes
+	Type() shared.CodecType // get CodecType
+	L() *Logger             // Log Service
+}
+
+// package core
+type Result interface {
+	Map() *shared.MapConv   // get MapConv when result.CodecType = Map
+	Bytes() []byte          // get Bytes when result.CodeType = Bytes
+	Type() shared.CodecType // get CodecType
+}
+
+// package codec
+type Union interface {
+	Map() *shared.MapConv   // get MapConv when CodecType = Map
+	Bytes() []byte          // get Bytes when CodeType = Bytes
+	Type() shared.CodecType // get CodecType
+}
+```
+
+#### `Args` `Result`  自由约定
+
+由于双向支持 `CodecType` ，可以完全自定义单边编码类型：
+
+| ExecArgs | ExecResult |
+| :------: | :--------: |
+|   Map    |    Map     |
+|   Map    |   Bytes    |
+|  Bytes   |    Map     |
+|  Bytes   |   Bytes    |
+|  ......  |   ......   |
+
+其他编码类型支持后，将衍生出更多组合。
+
+#### MapConv 支持
+
+上文提到，目前序列化 `map[string]interface{}` 后会将部分类型进行转换，这对于接收者是繁杂的，需要多次断言、判定、赋值。
+
+所以为了解决这个问题，框架提供了 `MapConv` ，接收者可以直接通过 `ctx.Map().Getxxx()` 获取需要的值。
+
+### 加强约束性
+
+方案最开始提到当前 `Core` `Plugin` 双方依赖“约定”，这在小型项目中是加快开发速度，减少代码的利器。但在中大型项目中“约束”依旧是必选项，如何约束  `PluginName` `PluginVersion` `FuncName` `ArgsMap` `ResultMap`  ？
+
+我使用**代码生成**的方式实现约束性。框架将提供 `CLI` 工具，并需要开发者按照 `Recommanded Project Layout` 开发项目。
+
+在项目根目录下建立 `.goplugin` 文件夹，每个 `Name-Version.yaml` 代表一个插件，内容做出类似如下约束：
+
+```yaml
+# Math-v1.yaml
+name: Math
+version: v1
+functions:
+  - name: Plus
+    args:
+      - name: a
+        type: int64
+      - name: b
+        type: int64
+    result:
+      - name: v
+        type: int64
+  - name: Minus
+    args:
+      - name: a
+        type: int64
+      - name: b
+        type: int64
+    result:
+      - name: v
+        type: int64
+```
+
+使用 `CLI` 运行：
+
+```shell
+./cli create # or
+./cli create -f customdir/Math-v1.yaml # or
+./cli create -d customdir
+```
+
+框架将帮助您生成 `Plugin` `Core` 的对接模板
+
+此时， `PluginName` `PluginVersion` `FuncName` `ArgsMap` `ResultMap` 都将被预定义而无需手写。
+
+# 项目开发时间计划
 
 
 
