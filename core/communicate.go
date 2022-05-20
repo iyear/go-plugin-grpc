@@ -59,9 +59,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 					return err
 				}
 
-				if err = i.core.recvExecResp(&resp); err != nil {
-					return err
-				}
+				go i.core.recvExecResp(&resp)
 			case pb.CommunicateType_Ping:
 				if !bound {
 					continue

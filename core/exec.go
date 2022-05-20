@@ -10,31 +10,31 @@ import (
 	"time"
 )
 
-func (c *Core) recvExecResp(resp *pb.CommunicateExecResponse) error {
+func (c *Core) recvExecResp(resp *pb.CommunicateExecResponse) {
 	exec, ok := c.execResp.Load(resp.ID)
 	if !ok {
-		return fmt.Errorf("exec response channel not found: %d", resp.ID)
+		return
 	}
-
-	go func() {
-		timer := time.NewTimer(time.Second * 5)
-		defer timer.Stop()
-
-		r := execResp{
-			CommunicateExecResponse: &pb.CommunicateExecResponse{
-				ID:     resp.ID,
-				Result: resp.Result,
-				Type:   resp.Type,
-				Err:    resp.Err,
-			}}
-
-		select {
-		case <-timer.C:
-		case exec.(chan execResp) <- r:
+	ch := exec.(chan execResp)
+	defer func() {
+		if _, loaded := c.execResp.LoadAndDelete(resp.ID); loaded {
+			close(ch)
 		}
 	}()
 
-	return nil
+	r := execResp{
+		CommunicateExecResponse: &pb.CommunicateExecResponse{
+			ID:     resp.ID,
+			Result: resp.Result,
+			Type:   resp.Type,
+			Err:    resp.Err,
+		}}
+
+	select {
+	case ch <- r:
+	default:
+	}
+
 }
 
 // Call blocks until the func is executed or timeout
@@ -56,6 +56,11 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 	// set result channel
 	respCh := make(chan execResp, 0)
 	c.execResp.Store(id, respCh)
+	defer func() {
+		if _, loaded := c.execResp.LoadAndDelete(id); loaded {
+			close(respCh)
+		}
+	}()
 
 	bytes, t, err := codec.Encode(args)
 	if err != nil {
@@ -77,11 +82,7 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 
 	// exec timeout
 	timer := time.NewTimer(c.opts.execTimeout)
-	defer func() {
-		timer.Stop()
-		close(respCh)
-		c.execResp.Delete(id)
-	}()
+	defer timer.Stop()
 
 	select {
 	case <-timer.C:
