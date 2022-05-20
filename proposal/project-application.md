@@ -43,21 +43,74 @@
 
 ### 核心概念
 
+了解核心概念有利于把握整体。方案中的核心概念并不多，且非常容易理解，设计的一切都在保证“轻量”目标。
+
 #### Core
 
 `Core` 为宿主，它是一个项目的核心实现，主要包含项目逻辑，基本不包含业务逻辑。开发者、用户通过 `Core` 调用插件中的函数。`Core` 被设计为 `Server` 。
 
 #### Plugin
 
-Plugin 为插件，它实现了 `Core` 所需的具体业务逻辑，。
+Plugin 为插件，它实现了 `Core` 所需的具体业务逻辑。`Plugin` 被设计为 `Client` 。
+
+#### Convention/约定
+
+设计方案倾向于“约定”而非“约束”，如果想和 `go-plugin` 一样做到强约束，开发者必须付出大量时间对约束性做出封装。而对于一个小型、轻量的项目，约束应当只是可选项。`Core` 与 `Plugin` 之间的插件名、版本、函数名、参数类型、结果类型应尽可能先约定，后约束。
+
+当然，对于一个大型项目，“约束”不应当被完全抛弃。下文将说明框架如何使用实现一定的约束性。
 
 #### Interface
 
-不同于 `Golang` 中的 `interface` ，在插件
+`Core` 可以定义多个 `interfce` 。相似但不同于 `Golang` 中的 `interface` ，为了贯彻单一职责，一个 `Plugin` 只允许实现 `Core` 的一个接口，履行一项职责。
+
+#### Func/Handler
+
+在 `Plugin` 执行 `Mount` 前，所有注册的业务逻辑函数被称为 `Func/Handler` 。函数签名为 `func(ctx plugin.Context) (interface{}, error)` 。其接收来自 `Core` 的参数，进行处理后将结果返回给 `Plugin` ，`Plugin` 帮助它向 `Core` 发送结果。
+
+### 选型
+
+- `gRPC Bidirectional Streaming` 为 `Main Stream` ，用于传输除 `Log` 以外的所有消息。
+- `gRPC Client-Side Streaming` 为 `Log Stream`，只用于传输 `Plugin Log`。
+- `ProtoBuf` 为所有消息的序列化协议。
 
 ### 架构图
 
-### 调用流程图
+<img src="arch.png" width="500px"  alt="arch"/>
+
+`Core` 包含以下组件/设置：
+
+- `Plugins Manager` 。记录 `Plugin` 信息与状态，一旦 `Plugin` `Mount` 到 `Core` ，`Plugins Manager` 将对 `Plugin` 拥有全管理权。
+- `gRPC Server` 。承载起 `Core` 与所有 `Plugin` 的通信，支持一系列设置
+- `Mount `
+- `Log Hub`。负责收集 
+- `Health Check Cron`。健康检查定时任务，`Core` 将定时检查 `Plugin` 健康状态。
+- `Developer Hook`。框架使用者可以对框架内
+
+### `ProtoBuf` 设计
+
+<img src="communicate-proto.png" width="500px"  alt="communicate-proto"/>
+
+在 `Communicate Stream` 中，所有消息均被 `Communicate Msg` 包装，`Type` 字段定义此次消息类型，`Core` `Plugin` 根据消息类型做出特定
+
+<img src="log-proto.png" width="300px"  alt="log-proto"/>
+
+
+
+### `Core`-`Plugin` 生命周期
+
+<img src="life-circle.png" width="500px"  alt="life-circle"/>
+
+### 方案详细描述
+
+**注意：框架完美运行的前提为 `Core` `Plugin` 互相信任，即 `Core` 只对 `Plugin` 的 `Mount` `Unmount` 阶段做合法性校验，之后的内容传输将完全信任**
+
+#### Mount
+
+`Plugin` 
+
+
+
+
 
 
 
