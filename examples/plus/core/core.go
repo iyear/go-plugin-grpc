@@ -41,16 +41,16 @@ func main() {
 	//	"A": 2,
 	//	"B": 3,
 	//})
-	//call(c, "EchoMap2Map", map[string]interface{}{
-	//	"Text": "hello",
-	//})
-	//call(c, "EchoMap2Bytes", map[string]interface{}{
-	//	"Text": "hello",
-	//})
-	//call(c, "EchoBytes2Map", []byte("hello"))
-	//call(c, "EchoBytes2Bytes", []byte("hello"))
+	call(c, "EchoMap2Map", map[string]interface{}{
+		"Text": "hello",
+	})
+	call(c, "EchoMap2Bytes", map[string]interface{}{
+		"Text": "hello",
+	})
+	call(c, "EchoBytes2Map", []byte("hello"))
+	call(c, "EchoBytes2Bytes", []byte("hello"))
 
-	call(c, "Panic", nil)
+	//call(c, "Panic", nil)
 	select {}
 }
 

@@ -16,7 +16,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 		case <-plugin.shutdown:
 			return fmt.Errorf("core force shutdown")
 		default:
-			recv, err := comm.Recv()
+			recv, err := comm.Recv() // TODO here can shutdown plugin
 			if err != nil {
 				return err
 			}
