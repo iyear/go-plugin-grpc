@@ -7,9 +7,9 @@ import (
 )
 
 type Union interface {
-	Map() *shared.MapConv
-	Bytes() []byte
-	Type() shared.CodecType
+	Map() *shared.MapConv   // get MapConv when CodecType = Map, otherwise panic
+	Bytes() []byte          // get Bytes when CodeType = Bytes, otherwise panic
+	Type() shared.CodecType // get CodecType
 }
 
 type nativeUnion struct {
