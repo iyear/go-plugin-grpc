@@ -18,3 +18,10 @@ const (
 	UnbindDowngrade UnbindReason = 3 // 插件降级
 	UnbindPanic     UnbindReason = 4 // 插件异常
 )
+
+type Status int32
+
+const (
+	StatusConnected    Status = 0
+	StatusDisconnected Status = 1
+)
