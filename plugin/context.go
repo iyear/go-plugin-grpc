@@ -6,11 +6,11 @@ import (
 )
 
 type Context interface {
-	Plugin() *Plugin
-	Map() *shared.MapConv
-	Bytes() []byte
-	Type() shared.CodecType
-	L() *Logger // Logger
+	Plugin() *Plugin        // get self
+	Map() *shared.MapConv   // get MapConv when CodecType = Map
+	Bytes() []byte          // get Bytes when CodeType = Bytes
+	Type() shared.CodecType // get CodecType
+	L() *Logger             // Log Service
 }
 
 type nativeCtx struct {

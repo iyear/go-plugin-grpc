@@ -1,108 +1,99 @@
 package shared
 
 import (
-	"google.golang.org/protobuf/types/known/structpb"
+	"fmt"
 	"sync"
+	"time"
 )
 
 type MapConv struct {
-	spb *structpb.Struct
-	mu  sync.RWMutex
+	m  map[string]interface{}
+	mu sync.RWMutex
 }
 
-//	╔════════════════════════╤════════════════════════════════════════════╗
-//	║ Go type                │ Conversion                                 ║
-//	╠════════════════════════╪════════════════════════════════════════════╣
-//	║ nil                    │ stored as NullValue                        ║
-//	║ bool                   │ stored as BoolValue                        ║
-//	║ int, int32, int64      │ stored as NumberValue                      ║
-//	║ uint, uint32, uint64   │ stored as NumberValue                      ║
-//	║ float32, float64       │ stored as NumberValue                      ║
-//	║ string                 │ stored as StringValue; must be valid UTF-8 ║
-//	║ []byte                 │ stored as StringValue; base64-encoded      ║
-//	║ map[string]interface{} │ stored as StructValue                      ║
-//	║ []interface{}          │ stored as ListValue                        ║
-//	╚════════════════════════╧════════════════════════════════════════════╝
-//
-
-func NewMapConv(spb *structpb.Struct) *MapConv {
-	if spb.GetFields() == nil {
-		spb.Fields = make(map[string]*structpb.Value)
-	}
+func NewMapConv(m map[string]interface{}) *MapConv {
 	return &MapConv{
-		spb: spb,
-		mu:  sync.RWMutex{},
+		m:  m,
+		mu: sync.RWMutex{},
 	}
 }
 
 func (c *MapConv) String() string {
-	return c.spb.String()
+	return fmt.Sprintf("%v", c.m)
 }
 
 func (c *MapConv) Map() map[string]interface{} {
-	return c.spb.AsMap()
+	return c.m
 }
 
-func (c *MapConv) Get(key string) (*structpb.Value, bool) {
+func (c *MapConv) Get(key string) (interface{}, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	v, ok := c.spb.GetFields()[key]
+	v, ok := c.m[key]
 	return v, ok
 }
 
-func (c *MapConv) MustGet(key string) *structpb.Value {
+func (c *MapConv) MustGet(key string) interface{} {
 	if value, exists := c.Get(key); exists {
 		return value
 	}
 	panic("Key \"" + key + "\" does not exist")
 }
 
-func (c *MapConv) GetInterface(key string) interface{} {
-	if value, exists := c.Get(key); exists {
-		return value.AsInterface()
-	}
-	return nil
-}
-
 func (c *MapConv) GetBool(key string) (b bool) {
 	if val, ok := c.Get(key); ok && val != nil {
-		b = val.GetBoolValue()
+		b, _ = val.(bool)
 	}
 	return
 }
 
 func (c *MapConv) GetString(key string) (s string) {
 	if val, ok := c.Get(key); ok && val != nil {
-		s = val.GetStringValue()
+		s, _ = val.(string)
 	}
 	return
 }
 
 func (c *MapConv) GetFloat64(key string) (f float64) {
 	if val, ok := c.Get(key); ok && val != nil {
-		f = val.GetNumberValue()
+		f, _ = val.(float64)
 	}
 	return
 }
 
 func (c *MapConv) GetFloat32(key string) (f float32) {
-	return float32(c.GetFloat64(key))
+	if val, ok := c.Get(key); ok && val != nil {
+		f, _ = val.(float32)
+	}
+	return
 }
 
 func (c *MapConv) GetInt(key string) (i int) {
-	return int(c.GetFloat64(key))
+	if val, ok := c.Get(key); ok && val != nil {
+		i, _ = val.(int)
+	}
+	return
 }
 
 func (c *MapConv) GetInt64(key string) (i int64) {
-	return int64(c.GetFloat64(key))
+	if val, ok := c.Get(key); ok && val != nil {
+		i, _ = val.(int64)
+	}
+	return
 }
 
 func (c *MapConv) GetInt32(key string) (i int32) {
-	return int32(c.GetFloat64(key))
+	if val, ok := c.Get(key); ok && val != nil {
+		i, _ = val.(int32)
+	}
+	return
 }
 
 func (c *MapConv) GetUint(key string) (u uint) {
-	return uint(c.GetFloat64(key))
+	if val, ok := c.Get(key); ok && val != nil {
+		u, _ = val.(uint)
+	}
+	return
 }
 
 func (c *MapConv) GetUint32(key string) (u uint32) {
@@ -110,28 +101,50 @@ func (c *MapConv) GetUint32(key string) (u uint32) {
 }
 
 func (c *MapConv) GetUint64(key string) (u uint64) {
-	return uint64(c.GetFloat64(key))
-}
-
-// GetSliceIter return false to stop iteration
-func (c *MapConv) GetSliceIter(key string, f func(v *structpb.Value) bool) {
 	if val, ok := c.Get(key); ok && val != nil {
-		if list := val.GetListValue(); list != nil {
-			for _, v := range list.GetValues() {
-				if !f(v) {
-					break
-				}
-			}
-		}
+		u, _ = val.(uint64)
 	}
+	return
 }
 
-func (c *MapConv) GetSlice(key string) []interface{} {
-	interfaces := make([]interface{}, 0)
-	c.GetSliceIter(key, func(v *structpb.Value) bool {
-		interfaces = append(interfaces, v.AsInterface())
-		return true
-	})
+func (c *MapConv) GetTime(key string) (t time.Time) {
+	if val, ok := c.Get(key); ok && val != nil {
+		t, _ = val.(time.Time)
+	}
+	return
+}
 
-	return interfaces
+func (c *MapConv) GetDuration(key string) (d time.Duration) {
+	if val, ok := c.Get(key); ok && val != nil {
+		d, _ = val.(time.Duration)
+	}
+	return
+}
+
+func (c *MapConv) GetStringSlice(key string) (ss []string) {
+	if val, ok := c.Get(key); ok && val != nil {
+		ss, _ = val.([]string)
+	}
+	return
+}
+
+func (c *MapConv) GetStringMap(key string) (sm map[string]interface{}) {
+	if val, ok := c.Get(key); ok && val != nil {
+		sm, _ = val.(map[string]interface{})
+	}
+	return
+}
+
+func (c *MapConv) GetStringMapString(key string) (sms map[string]string) {
+	if val, ok := c.Get(key); ok && val != nil {
+		sms, _ = val.(map[string]string)
+	}
+	return
+}
+
+func (c *MapConv) GetStringMapStringSlice(key string) (smss map[string][]string) {
+	if val, ok := c.Get(key); ok && val != nil {
+		smss, _ = val.(map[string][]string)
+	}
+	return
 }

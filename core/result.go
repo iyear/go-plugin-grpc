@@ -6,10 +6,17 @@ import (
 )
 
 type Result interface {
-	Map() *shared.MapConv
-	Bytes() []byte
-	Type() shared.CodecType
+	Map() *shared.MapConv   // get MapConv when result.CodecType = Map
+	Bytes() []byte          // get Bytes when result.CodeType = Bytes
+	Type() shared.CodecType // get CodecType
 }
+
 type nativeResult struct {
 	*codec.Union
+}
+
+type Union interface {
+	Map() *shared.MapConv   // get MapConv when CodecType = Map
+	Bytes() []byte          // get Bytes when CodeType = Bytes
+	Type() shared.CodecType // get CodecType
 }
