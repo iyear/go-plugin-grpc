@@ -32,7 +32,7 @@
 
 - **日志系统可扩展性差。**由于只支持本机系统，`go-plugin`的日志采用 `stdout/stderr` 方式直接 `copy` 到宿主进程。`stdout/stderr` 的灵活性比网络传输差，难以做云原生迁移。
 
-- **需要开发者大量封装。**`hashicorp/vault` 中需要开发者提前封装接口、中间转换函数，过程冗杂，代码量高，不符合“轻量”目标。
+- **需要开发者大量封装。**`hashicorp/go-plugin` 需要开发者提前封装接口、选择适配序列化协议、中间转换函数，过程冗杂，代码量高，不符合“轻量”目标。
 
 ## 实现方案
 
@@ -188,12 +188,18 @@ Plugin 为插件，它实现了 `Core` 所需的具体业务逻辑。`Plugin` �
 #### ExecRequest(执行请求)
 
 - **`ID ` ：执行ID。**用于全局唯一标识此次执行请求。
+
 - **`FuncName` ： 执行函数名。**指向 `Handlers` 中存在的函数。
+
 - **`Type` ：“参数”编码类型。**目前支持 `Map(map[string]interface{})` 与 `Bytes([]byte)` ，由 `codec` 包控制，已预留扩展性。
+
 - **`Payload` ：编码后的数据负载。**
-  - `Map` ：当前由 `google/protobuf/struct.proto` 实现序列化、反序列化。但是数字类型在实际传输过程中会被转换为 `float64`，导致原有精度丢失。适合轻量、约定为主、数字敏感度低的项目使用。
+  
+  - `Map` ：由 `msgpack` 实现序列化/反序列化。适合轻量、约定为主的项目使用。
+  
   - `Bytes` ：为开发者提供了自由选择序列化协议的渠道。例如：开发者可以自己定义具体业务的 `protobuf messages` ，在 `Core` `Plugin` 两侧自行实现序列化/反序列化。
-  - 更多传输类型将被支持。**未来将选择适当的序列化协议，例如 `msgpack` `Thrift` 等，解决目前 `Map` 存在的精度问题。**同时底层序列化协议的修改不会影响上层开发者使用。
+  
+  - 更多内置传输类型将被支持。同时底层序列化协议的修改不会影响上层开发者使用。
 
 
 #### ExecResponse(执行响应)
@@ -214,7 +220,7 @@ Plugin 为插件，它实现了 `Core` 所需的具体业务逻辑。`Plugin` �
 - **`Level` ：日志等级。**可以为 `Debug` `Info` `Warn` `Error` 。
 - **`Message` ：日志内容。**
 
-### Codec  与 Getter 设计
+### Codec  与 MapConv 设计
 
 #### Codec Interface 设计
 
@@ -225,24 +231,20 @@ Plugin 为插件，它实现了 `Core` 所需的具体业务逻辑。`Plugin` �
 type HandlerFunc func(ctx Context) (interface{}, error)
 
 type Context interface {
-	Plugin() *Plugin        // get self
-	Map() *shared.MapConv   // get MapConv when args.CodecType = Map
-	Bytes() []byte          // get Bytes when args.CodeType = Bytes
-	Type() shared.CodecType // get CodecType
-	L() *Logger             // Log Service
+	codec.Union
+	Plugin() *Plugin // get self
+	L() *Logger      // Log Service
 }
 
 // package core
 type Result interface {
-	Map() *shared.MapConv   // get MapConv when result.CodecType = Map
-	Bytes() []byte          // get Bytes when result.CodeType = Bytes
-	Type() shared.CodecType // get CodecType
+	codec.Union
 }
 
 // package codec
 type Union interface {
-	Map() *shared.MapConv   // get MapConv when CodecType = Map
-	Bytes() []byte          // get Bytes when CodeType = Bytes
+	Map() *shared.MapConv   // get MapConv when CodecType = Map, otherwise panic
+	Bytes() []byte          // get Bytes when CodeType = Bytes, otherwise panic
 	Type() shared.CodecType // get CodecType
 }
 ```
@@ -263,9 +265,15 @@ type Union interface {
 
 #### MapConv 支持
 
-上文提到，目前序列化 `map[string]interface{}` 后会将部分类型进行转换，这对于接收者是繁杂的，需要多次断言、判定、赋值。
+上文提到，框架支持 `map[string]interface{}` 的简便传输方案(也是为了能直接兼容 `DevStream` 目前的插件设计)，但使用者需要多次断言、判定、赋值。
 
-所以为了解决这个问题，框架提供了 `MapConv` ，接收者可以直接通过 `ctx.Map().Getxxx()` 获取需要的值。
+所以为了优化 `Map` 的使用，框架提供了 `MapConv` ，接收者可以直接通过 `ctx.Map().Getxxx()` 获取需要的值。
+
+#### 使用 `msgpack` 序列化/反序列化 `map[string]interface{}`
+
+为什么选择 `msgpack` 而不是 `protobuf` ？因为 `protobuf` 序列化 `map[string]interface{}` 需要使用 `google/protobuf/struct.proto` 序列化过程会将所有数字类型转为 `float64` 导致精度丢失。
+
+而 `msgpack` 会保留原有类型，甚至对 `time.Time` 等内置类型也做了适配。同时 `msgpack` 的语言兼容度、性能、资源占用与 `protobuf` 差距不大。为了数据安全性考虑选择 `msgpack` 。
 
 ### 加强约束性
 
