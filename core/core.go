@@ -39,7 +39,7 @@ type PluginInfo struct {
 type Interface map[string][]string
 
 func New(token string, opts ...Option) *Core {
-	// TODO ExecTimeout 应当小于等于 ServerOpts 的超时时间
+	// TODO ExecTimeout 应当小于等于 serverOpts 的超时时间
 	c := Core{
 		token:    token,
 		plugins:  sync.Map{},
@@ -53,7 +53,7 @@ func New(token string, opts ...Option) *Core {
 		opt.apply(&c.opts)
 	}
 
-	c.server = grpc.NewServer(c.opts.ServerOpts...)
+	c.server = grpc.NewServer(c.opts.serverOpts...)
 
 	i := impl{core: &c}
 	c.impl = &i

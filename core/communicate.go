@@ -34,7 +34,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 					return err
 				}
 
-				i.core.opts.Logger.Logf("core", LogLevelInfo, "bind plugin [%s.%s],impl [%s] interface,funcs: %v", p.name, p.version, p.impl, p.funcs.String())
+				i.core.opts.logger.Logf("core", LogLevelInfo, "bind plugin [%s.%s],impl [%s] interface,funcs: %v", p.name, p.version, p.impl, p.funcs.String())
 				bound = true
 				plugin = p
 				plugin.health = time.Now().Unix() // init health time
@@ -48,7 +48,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 					return err
 				}
 				// 解绑错误直接断开连接
-				i.core.opts.Logger.Logf("core", LogLevelInfo, "unbind plugin %s.%s, %s:%v", plugin.name, plugin.version, pb.UnbindReason_name[int32(req.Reason)], req.Msg)
+				i.core.opts.logger.Logf("core", LogLevelInfo, "unbind plugin %s.%s, %s:%v", plugin.name, plugin.version, pb.UnbindReason_name[int32(req.Reason)], req.Msg)
 				return i.core.unbind(plugin.name, plugin.version, &req)
 			case pb.CommunicateType_ExecResponse:
 				if !bound {
@@ -73,7 +73,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 				if err = proto.Unmarshal(recv.Data, &log); err != nil {
 					return err
 				}
-				i.core.opts.Logger.Log(strings.Join([]string{plugin.name, plugin.version}, "."), LogLevel(log.Type), log.Message)
+				i.core.opts.logger.Log(strings.Join([]string{plugin.name, plugin.version}, "."), LogLevel(log.Type), log.Message)
 			}
 		}
 	}

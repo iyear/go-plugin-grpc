@@ -79,9 +79,9 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*Plugi
 		funcs.Add(f)
 	}
 	implName := ""
-	if c.opts.Interfaces != nil {
+	if c.opts.interfaces != nil {
 		impls := 0
-		for name, set := range c.opts.Interfaces {
+		for name, set := range c.opts.interfaces {
 			if funcs.IsSuperset(set) {
 				impls++
 				implName = name

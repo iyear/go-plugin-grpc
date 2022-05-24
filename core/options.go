@@ -13,14 +13,15 @@ type Option interface {
 }
 
 type Options struct {
-	ServerOpts    []grpc.ServerOption
 	Port          int
 	HealthTimeout time.Duration
-	Logger        Logger
 	ExecReqChSize int
 	ExecTimeout   time.Duration
-	Interfaces    map[string]mapset.Set // requires the plugin to implement functions that satisfy at least one interface. nil if no interfaces are required
-	LogLevel      LogLevel              // TODO core log level
+
+	logger     Logger
+	serverOpts []grpc.ServerOption
+	interfaces map[string]mapset.Set // requires the plugin to implement functions that satisfy at least one interface. nil if no interfaces are required
+	logLevel   LogLevel              // TODO core log level
 }
 
 type option struct {
@@ -35,14 +36,14 @@ func newOption(f func(options *Options)) *option { return &option{f: f} }
 
 func defaultOpts() Options {
 	return Options{
-		ServerOpts:    make([]grpc.ServerOption, 0),
+		serverOpts:    make([]grpc.ServerOption, 0),
 		HealthTimeout: time.Second * 15,
-		LogLevel:      LogLevelInfo,
+		logLevel:      LogLevelInfo,
 		Port:          13000,
 		ExecReqChSize: 0,
-		Interfaces:    nil, // default: no interfaces required
+		interfaces:    nil, // default: no interfaces required
 		ExecTimeout:   time.Second * 10,
-		Logger: &defaultLogger{
+		logger: &defaultLogger{
 			logger: log.New(os.Stdout, "", log.LstdFlags),
 		},
 	}
@@ -60,7 +61,7 @@ func WithHealthTimeout(dur time.Duration) Option {
 //WithLogLevel set the log level, default is Info
 func WithLogLevel(level LogLevel) Option {
 	return newOption(func(options *Options) {
-		options.LogLevel = level
+		options.logLevel = level
 	})
 }
 
@@ -74,7 +75,7 @@ func WithPort(port int) Option {
 //WithLogger set the logger, default is stdlib logger
 func WithLogger(logger Logger) Option {
 	return newOption(func(options *Options) {
-		options.Logger = logger
+		options.logger = logger
 	})
 }
 
@@ -94,7 +95,7 @@ func WithExecTimeout(dur time.Duration) Option {
 
 func WithServerOpts(opts ...grpc.ServerOption) Option {
 	return newOption(func(options *Options) {
-		options.ServerOpts = opts
+		options.serverOpts = opts
 	})
 }
 
@@ -110,6 +111,6 @@ func WithInterfaces(interfaces ...Interface) Option {
 				intfs[k] = intf
 			}
 		}
-		options.Interfaces = intfs
+		options.interfaces = intfs
 	})
 }

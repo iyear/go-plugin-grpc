@@ -14,12 +14,12 @@ func (c *Core) healthCheck() func() {
 			}
 
 			t := time.Now().Unix() - int64(c.opts.HealthTimeout.Seconds())
-			c.opts.Logger.Logf("core", LogLevelDebug, "checking health of plugin %s.%s: %d/%d", v.name, v.version, v.health, t)
+			c.opts.logger.Logf("core", LogLevelDebug, "checking health of plugin %s.%s: %d/%d", v.name, v.version, v.health, t)
 
 			if v.health < t {
-				c.opts.Logger.Logf("core", LogLevelInfo, "shutdown plugin %s.%s", v.name, v.version)
+				c.opts.logger.Logf("core", LogLevelInfo, "shutdown plugin %s.%s", v.name, v.version)
 				if err := c.ShutdownPlugin(v.name, v.version); err != nil {
-					c.opts.Logger.Logf("core", LogLevelError, "shutdown plugin %s.%s failed: %s", v.name, v.version, err.Error())
+					c.opts.logger.Logf("core", LogLevelError, "shutdown plugin %s.%s failed: %s", v.name, v.version, err.Error())
 					return false
 				}
 			}
