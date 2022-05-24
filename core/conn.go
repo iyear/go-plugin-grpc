@@ -25,7 +25,7 @@ func (c *Core) Serve() error {
 
 	// TODO attention
 	// health check,only internal is the half of the HealthTimeout
-	_, err = c.cron.AddFunc(fmt.Sprintf("@every %ds", int(c.opts.ExecTimeout.Seconds()/2)), c.healthCheck())
+	_, err = c.cron.AddFunc(fmt.Sprintf("@every %ds", int(c.opts.HealthTimeout.Seconds()/2)), c.healthCheck())
 	if err != nil {
 		return err
 	}
