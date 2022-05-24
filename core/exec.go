@@ -70,7 +70,7 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 		ID:       id,
 		FuncName: funcName,
 		Type:     t,
-		Args:     bytes,
+		Payload:  bytes,
 	})
 	// failed to marshal
 	if err != nil {

@@ -78,7 +78,7 @@ func (p *Plugin) execFunc(req *pb.CommunicateExecRequest) (*pb.CommunicateExecRe
 		return nil, fmt.Errorf("func %s not found", req.FuncName)
 	}
 
-	union, err := codec.Decode(req.Args, req.Type)
+	union, err := codec.Decode(req.Payload, req.Type)
 	if err != nil {
 		return nil, err
 	}

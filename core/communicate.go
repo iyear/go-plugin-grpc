@@ -48,8 +48,8 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 					return err
 				}
 				// 解绑错误直接断开连接
-				i.core.opts.logger.Logf("core", LogLevelInfo, "unbind plugin %s.%s, %s:%v", req.Name, req.Version, pb.UnbindReason_name[int32(req.Reason)], req.Msg)
-				return i.core.unbind(&req)
+				i.core.opts.logger.Logf("core", LogLevelInfo, "unbind plugin %s.%s, %s:%v", plugin.name, plugin.version, pb.UnbindReason_name[int32(req.Reason)], req.Msg)
+				return i.core.unbind(plugin.name, plugin.version, &req)
 			case pb.CommunicateType_ExecResponse:
 				if !bound {
 					continue

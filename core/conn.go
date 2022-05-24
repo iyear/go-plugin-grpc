@@ -111,13 +111,13 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*plugi
 	return &info, nil
 }
 
-func (c *Core) unbind(req *pb.UnbindRequest) error {
+func (c *Core) unbind(name, version string, req *pb.UnbindRequest) error {
 	if c.token != req.Token {
 		return errors.New("invalid token")
 	}
-	key := util.GenKey(req.Name, req.Version)
+	key := util.GenKey(name, version)
 	if _, ok := c.plugins.Load(key); !ok {
-		return fmt.Errorf("plugin %s.%s is not exists", req.Name, req.Version)
+		return fmt.Errorf("plugin %s.%s is not exists", name, version)
 	}
 	c.plugins.Delete(key)
 	return nil

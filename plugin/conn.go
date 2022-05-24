@@ -77,11 +77,9 @@ func (p *Plugin) Mount(target string, port int) error {
 //unbind 填写参数msg将在Core打印解绑原因，如不需要传入nil
 func (p *Plugin) unbind(reason UnbindReason, msg *string) error {
 	b, err := proto.Marshal(&pb.UnbindRequest{
-		Reason:  pb.UnbindReason(reason),
-		Token:   p.token,
-		Name:    p.name,
-		Version: p.version,
-		Msg:     msg,
+		Reason: pb.UnbindReason(reason),
+		Token:  p.token,
+		Msg:    msg,
 	})
 	if err != nil {
 		return err
