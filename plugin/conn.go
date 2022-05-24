@@ -42,16 +42,11 @@ func (p *Plugin) Mount(target string, port int) error {
 	//fmt.Println("comm success")
 
 	// bind
-	funcs := make([]string, 0)
-	p.handlers.Range(func(key, value interface{}) bool {
-		funcs = append(funcs, key.(string))
-		return true
-	})
 	b, err := proto.Marshal(&pb.BindRequest{
 		Token:     p.token,
 		Name:      p.name,
 		Version:   p.version,
-		Functions: funcs,
+		Functions: p.Funcs(),
 	})
 	if err != nil {
 		return err

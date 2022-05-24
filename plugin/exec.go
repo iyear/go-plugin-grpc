@@ -73,7 +73,7 @@ func (p *Plugin) recoverExec(req *pb.CommunicateExecRequest) {
 
 //exec 执行函数
 func (p *Plugin) execFunc(req *pb.CommunicateExecRequest) (*pb.CommunicateExecResponse, error) {
-	f, ok := p.handlers.Load(req.FuncName)
+	f, ok := p.handlers[req.FuncName]
 	if !ok {
 		return nil, fmt.Errorf("func %s not found", req.FuncName)
 	}
@@ -83,7 +83,7 @@ func (p *Plugin) execFunc(req *pb.CommunicateExecRequest) (*pb.CommunicateExecRe
 		return nil, err
 	}
 
-	result, err := f.(HandlerFunc)(&nativeCtx{
+	result, err := f(&nativeCtx{
 		plugin: p,
 		Union:  union,
 	})

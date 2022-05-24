@@ -4,7 +4,6 @@ import (
 	"github.com/iyear/go-plugin-grpc/internal/pb"
 	"github.com/robfig/cron/v3"
 	"google.golang.org/grpc"
-	"sync"
 )
 
 type Logger struct {
@@ -14,16 +13,16 @@ type Logger struct {
 type HandlerFunc func(ctx Context) (interface{}, error)
 
 type Plugin struct {
-	conn     *grpc.ClientConn // grpc connection
-	clients  *clients         // grpc clients
-	name     string           // plugin name
-	token    string           // plugin token
-	opts     options          // plugin options
-	version  string           // plugin version
-	cron     *cron.Cron       // cron for heartbeat
-	status   pb.PluginStatus  // plugin status
-	handlers sync.Map         // map[string]HandlerFunc // plugin handlers
-	cancel   func()           // context cancel func
+	conn     *grpc.ClientConn       // grpc connection
+	clients  *clients               // grpc clients
+	name     string                 // plugin name
+	token    string                 // plugin token
+	opts     options                // plugin options
+	version  string                 // plugin version
+	cron     *cron.Cron             // cron for heartbeat
+	status   pb.PluginStatus        // plugin status
+	handlers map[string]HandlerFunc // plugin handlers. no need to use sync.Map
+	cancel   func()                 // context cancel func
 
 	Log *Logger
 }
@@ -44,7 +43,7 @@ func New(name, ver, token string, opts ...Option) *Plugin {
 		status:   pb.PluginStatus_Disconnected,
 		opts:     defaultOpts(),
 		cron:     cron.New(),
-		handlers: sync.Map{},
+		handlers: make(map[string]HandlerFunc),
 	}
 
 	for _, opt := range opts {
@@ -57,7 +56,10 @@ func New(name, ver, token string, opts ...Option) *Plugin {
 }
 
 func (p *Plugin) Handle(funcName string, handler HandlerFunc) {
-	p.handlers.Store(funcName, handler)
+	if _, ok := p.handlers[funcName]; ok {
+		panic("plugin: func " + funcName + " already exists")
+	}
+	p.handlers[funcName] = handler
 }
 
 func (p *Plugin) Name() string {
@@ -78,10 +80,9 @@ func (p *Plugin) Status() Status {
 
 func (p *Plugin) Funcs() []string {
 	funcs := make([]string, 0)
-	p.handlers.Range(func(key, _ interface{}) bool {
-		funcs = append(funcs, key.(string))
-		return true
-	})
+	for f, _ := range p.handlers {
+		funcs = append(funcs, f)
+	}
 	return funcs
 }
 
