@@ -8,7 +8,7 @@ func (c *Core) healthCheck() func() {
 	return func() {
 		c.plugins.Range(func(key, value interface{}) bool {
 			_, ok1 := key.(string)
-			v, ok2 := value.(*pluginInfo)
+			v, ok2 := value.(*PluginInfo)
 			if !ok1 || !ok2 {
 				return true // continue
 			}

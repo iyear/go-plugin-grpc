@@ -51,7 +51,7 @@ func (c *Core) ShutdownPlugin(plugin, version string) error {
 		return fmt.Errorf("plugin %s not found", key)
 	}
 
-	close(p.(*pluginInfo).shutdown)
+	close(p.(*PluginInfo).shutdown)
 	c.plugins.Delete(key)
 
 	return nil
@@ -67,7 +67,7 @@ func (c *Core) Shutdown() {
 	c.status = pb.CoreStatus_Stopped
 }
 
-func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*pluginInfo, error) {
+func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*PluginInfo, error) {
 	// invalid token, disconnect
 	if req.Token != c.token {
 		return nil, errors.New("invalid token")
@@ -98,7 +98,7 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*plugi
 		return nil, fmt.Errorf("plugin %s.%s is exists", req.Name, req.Version)
 	}
 
-	info := pluginInfo{
+	info := PluginInfo{
 		name:     req.Name,
 		version:  req.Version,
 		health:   0,

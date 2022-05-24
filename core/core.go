@@ -11,7 +11,7 @@ import (
 type Core struct {
 	impl     *impl
 	token    string
-	plugins  sync.Map      // map[string]*pluginInfo
+	plugins  sync.Map      // map[string]*PluginInfo
 	opts     options       // options
 	server   *grpc.Server  // grpc server
 	status   pb.CoreStatus // status
@@ -24,7 +24,7 @@ type impl struct {
 	core *Core
 }
 
-type pluginInfo struct {
+type PluginInfo struct {
 	name     string
 	version  string
 	health   int64
@@ -58,4 +58,12 @@ func New(token string, opts ...Option) *Core {
 	c.impl = &i
 	pb.RegisterConnServer(c.server, &i)
 	return &c
+}
+
+func (c *Core) Token() string {
+	return c.token
+}
+
+func (c *Core) Status() Status {
+	return Status(c.status)
 }

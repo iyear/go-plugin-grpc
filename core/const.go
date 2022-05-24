@@ -8,3 +8,10 @@ const (
 	LogLevelWarn  LogLevel = 2
 	LogLevelError LogLevel = 3
 )
+
+type Status int32
+
+const (
+	StatusLaunched Status = 0
+	StatusStopped  Status = 1
+)

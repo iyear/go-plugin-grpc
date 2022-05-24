@@ -10,7 +10,7 @@ import (
 
 func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 	bound := false
-	plugin := &pluginInfo{}
+	plugin := &PluginInfo{}
 	for {
 		select {
 		case <-plugin.shutdown:

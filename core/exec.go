@@ -47,7 +47,7 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 	}
 
 	// reduce functions not found after transmission
-	if !p.(*pluginInfo).funcs.Contains(funcName) {
+	if !p.(*PluginInfo).funcs.Contains(funcName) {
 		return nil, fmt.Errorf("func %s not found", funcName)
 	}
 
@@ -76,7 +76,7 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 	if err != nil {
 		return nil, err
 	}
-	if err = p.(*pluginInfo).comm.Send(&pb.CommunicateMsg{Type: pb.CommunicateType_ExecRequest, Data: b}); err != nil {
+	if err = p.(*PluginInfo).comm.Send(&pb.CommunicateMsg{Type: pb.CommunicateType_ExecRequest, Data: b}); err != nil {
 		return nil, err
 	}
 
