@@ -12,7 +12,7 @@ type Core struct {
 	impl     *impl
 	token    string
 	plugins  sync.Map      // map[string]*PluginInfo
-	opts     options       // options
+	opts     Options       // options
 	server   *grpc.Server  // grpc server
 	status   pb.CoreStatus // status
 	cron     *cron.Cron    // health check
@@ -38,7 +38,7 @@ type PluginInfo struct {
 type Interface map[string][]string
 
 func New(token string, opts ...Option) *Core {
-	// TODO execTimeout 应当小于等于 serverOpts 的超时时间
+	// TODO ExecTimeout 应当小于等于 ServerOpts 的超时时间
 	c := Core{
 		token:    token,
 		plugins:  sync.Map{},
@@ -52,7 +52,7 @@ func New(token string, opts ...Option) *Core {
 		opt.apply(&c.opts)
 	}
 
-	c.server = grpc.NewServer(c.opts.serverOpts...)
+	c.server = grpc.NewServer(c.opts.ServerOpts...)
 
 	i := impl{core: &c}
 	c.impl = &i
@@ -66,4 +66,9 @@ func (c *Core) Token() string {
 
 func (c *Core) Status() Status {
 	return Status(c.status)
+}
+
+// Opts returns the options of the core,it's read-only
+func (c *Core) Opts() Options {
+	return c.opts
 }

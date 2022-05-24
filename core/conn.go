@@ -18,14 +18,14 @@ func (c *Core) Serve() error {
 		c.Shutdown()
 	}()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.opts.port))
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", c.opts.Port))
 	if err != nil {
 		return err
 	}
 
 	// TODO attention
-	// health check,only internal is the half of the healthTimeout
-	_, err = c.cron.AddFunc(fmt.Sprintf("@every %ds", int(c.opts.execTimeout.Seconds()/2)), c.healthCheck())
+	// health check,only internal is the half of the HealthTimeout
+	_, err = c.cron.AddFunc(fmt.Sprintf("@every %ds", int(c.opts.ExecTimeout.Seconds()/2)), c.healthCheck())
 	if err != nil {
 		return err
 	}
@@ -79,9 +79,9 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*Plugi
 		funcs.Add(f)
 	}
 	implName := ""
-	if c.opts.interfaces != nil {
+	if c.opts.Interfaces != nil {
 		impls := 0
-		for name, set := range c.opts.interfaces {
+		for name, set := range c.opts.Interfaces {
 			if funcs.IsSuperset(set) {
 				impls++
 				implName = name

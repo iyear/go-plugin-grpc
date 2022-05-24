@@ -81,7 +81,7 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 	}
 
 	// exec timeout
-	timer := time.NewTimer(c.opts.execTimeout)
+	timer := time.NewTimer(c.opts.ExecTimeout)
 	defer timer.Stop()
 
 	select {
