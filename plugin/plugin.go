@@ -80,7 +80,7 @@ func (p *Plugin) Status() Status {
 
 func (p *Plugin) Funcs() []string {
 	funcs := make([]string, 0)
-	for f, _ := range p.handlers {
+	for f := range p.handlers {
 		funcs = append(funcs, f)
 	}
 	return funcs
