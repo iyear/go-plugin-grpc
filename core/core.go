@@ -3,6 +3,7 @@ package core
 import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
+	"github.com/iyear/go-plugin-grpc/internal/util"
 	"github.com/robfig/cron/v3"
 	"google.golang.org/grpc"
 	"sync"
@@ -71,4 +72,23 @@ func (c *Core) Status() Status {
 // Opts returns the options of the core,it's read-only
 func (c *Core) Opts() Options {
 	return c.opts
+}
+
+//Plugin returns the plugin info of the specified plugin
+func (c *Core) Plugin(name, version string) (*PluginInfo, bool) {
+	p, ok := c.plugins.Load(util.GenKey(name, version))
+	if !ok {
+		return nil, false
+	}
+	return p.(*PluginInfo), true
+}
+
+//Plugins returns the plugin info of all plugins
+func (c *Core) Plugins() []*PluginInfo {
+	plugins := make([]*PluginInfo, 0)
+	c.plugins.Range(func(key, value interface{}) bool {
+		plugins = append(plugins, value.(*PluginInfo))
+		return true
+	})
+	return plugins
 }
