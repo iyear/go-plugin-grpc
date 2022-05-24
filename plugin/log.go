@@ -40,7 +40,7 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 }
 
 func (l *Logger) log(level pb.LogLevel, message string) {
-	if l.plugin.opts.logLevel > level {
+	if l.plugin.opts.LogLevel > LogLevel(level) {
 		return
 	}
 

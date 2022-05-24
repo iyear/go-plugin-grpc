@@ -16,7 +16,7 @@ func (p *Plugin) Mount(target string, port int) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.cancel = cancel
 
-	conn, err := grpc.DialContext(ctx, fmt.Sprintf("%s:%d", target, port), p.opts.dialOpts...)
+	conn, err := grpc.DialContext(ctx, fmt.Sprintf("%s:%d", target, port), p.opts.DialOpts...)
 	if err != nil {
 		return err
 	}
@@ -27,14 +27,14 @@ func (p *Plugin) Mount(target string, port int) error {
 	p.clients.conn = pb.NewConnClient(conn)
 
 	// TODO log是否开另一条连接专用还在考虑，涉及到token验证，不利于复用
-	logClient, err := p.clients.conn.Log(ctx, p.opts.callOpts...)
+	logClient, err := p.clients.conn.Log(ctx, p.opts.CallOpts...)
 	if err != nil {
 		return err
 	}
 	p.clients.log = logClient
 	//fmt.Println("log success")
 
-	commClient, err := p.clients.conn.Communicate(ctx, p.opts.callOpts...)
+	commClient, err := p.clients.conn.Communicate(ctx, p.opts.CallOpts...)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (p *Plugin) Mount(target string, port int) error {
 	}
 
 	// 开始心跳
-	_, err = p.cron.AddFunc(fmt.Sprintf("@every %ds", int(p.opts.heartbeat.Seconds())), p.heartbeat())
+	_, err = p.cron.AddFunc(fmt.Sprintf("@every %ds", int(p.opts.Heartbeat.Seconds())), p.heartbeat())
 	if err != nil {
 		return err
 	}

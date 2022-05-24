@@ -17,7 +17,7 @@ type Plugin struct {
 	clients  *clients               // grpc clients
 	name     string                 // plugin name
 	token    string                 // plugin token
-	opts     options                // plugin options
+	opts     Options                // plugin Options
 	version  string                 // plugin version
 	cron     *cron.Cron             // cron for heartbeat
 	status   pb.PluginStatus        // plugin status
@@ -86,6 +86,7 @@ func (p *Plugin) Funcs() []string {
 	return funcs
 }
 
-func (p *Plugin) SetLogLevel(l LogLevel) {
-	p.opts.logLevel = pb.LogLevel(l)
+//Opts returns the options of the plugin,it's read-only
+func (p *Plugin) Opts() Options {
+	return p.opts
 }

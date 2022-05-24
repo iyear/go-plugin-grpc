@@ -15,7 +15,7 @@ func (p *Plugin) heartbeat() func() {
 			Type: pb.CommunicateType_Ping,
 			Data: buf,
 		}); err != nil {
-			p.Log.Errorf("heartbeat error: %v", err)
+			p.Log.Errorf("Heartbeat error: %v", err)
 		}
 	}
 }

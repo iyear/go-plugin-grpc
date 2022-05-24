@@ -46,7 +46,7 @@ func (p *Plugin) exec(data []byte) {
 func (p *Plugin) recoverExec(req *pb.CommunicateExecRequest) {
 	if r := recover(); r != nil {
 		p.Log.Errorf("exec func %s(%d) panic: %v", req.FuncName, req.ID, r)
-		p.opts.onPanic(p, req.ID, req.FuncName, fmt.Errorf("%v", r))
+		p.opts.OnPanic(p, req.ID, req.FuncName, fmt.Errorf("%v", r))
 		// TODO refactor
 		t := fmt.Errorf("panic: %v", r).Error()
 		msg, err := proto.Marshal(&pb.CommunicateExecResponse{
