@@ -39,7 +39,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 				plugin.health = time.Now().Unix() // init health time
 			case pb.CommunicateType_Unbind:
 				if !bound {
-					continue
+					return fmt.Errorf("plugin not bound")
 				}
 				req := pb.UnbindRequest{}
 				// 解析错误断开连接
@@ -50,7 +50,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 				return i.core.unbind(plugin.name, plugin.version, &req)
 			case pb.CommunicateType_ExecResponse:
 				if !bound {
-					continue
+					return fmt.Errorf("plugin not bound")
 				}
 				resp := pb.CommunicateExecResponse{}
 				if err = proto.Unmarshal(recv.Data, &resp); err != nil {
@@ -61,7 +61,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 				go i.core.recvExecResp(&resp)
 			case pb.CommunicateType_Ping:
 				if !bound {
-					continue
+					return fmt.Errorf("plugin not bound")
 				}
 
 				// ping hook
@@ -70,7 +70,7 @@ func (i *impl) Communicate(comm pb.Conn_CommunicateServer) error {
 				plugin.health = time.Now().Unix()
 			case pb.CommunicateType_Log:
 				if !bound {
-					continue
+					return fmt.Errorf("plugin not bound")
 				}
 				log := pb.LogInfo{}
 				if err = proto.Unmarshal(recv.Data, &log); err != nil {
