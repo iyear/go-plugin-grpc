@@ -2,6 +2,7 @@ package core
 
 import (
 	mapset "github.com/deckarep/golang-set"
+	"github.com/iyear/go-plugin-grpc/shared"
 	"google.golang.org/grpc"
 	"log"
 	"os"
@@ -18,10 +19,10 @@ type Options struct {
 	ExecReqChSize int
 	ExecTimeout   time.Duration
 
-	logger     Logger
+	hook       Hook
 	serverOpts []grpc.ServerOption
 	interfaces map[string]mapset.Set // requires the plugin to implement functions that satisfy at least one interface. nil if no interfaces are required
-	logLevel   LogLevel              // TODO core log level
+	logLevel   shared.LogLevel       // TODO core log level
 }
 
 type option struct {
@@ -38,14 +39,14 @@ func defaultOpts() Options {
 	return Options{
 		serverOpts:    make([]grpc.ServerOption, 0),
 		HealthTimeout: time.Second * 15,
-		logLevel:      LogLevelInfo,
+		logLevel:      shared.LogLevelInfo,
 		Port:          13000,
 		ExecReqChSize: 0,
-		interfaces:    nil, // default: no interfaces required
-		ExecTimeout:   time.Second * 10,
-		logger: &defaultLogger{
+		hook: &DefaultHook{
 			logger: log.New(os.Stdout, "", log.LstdFlags),
 		},
+		interfaces:  nil, // default: no interfaces required
+		ExecTimeout: time.Second * 10,
 	}
 }
 
@@ -59,7 +60,7 @@ func WithHealthTimeout(dur time.Duration) Option {
 }
 
 //WithLogLevel set the log level, default is Info
-func WithLogLevel(level LogLevel) Option {
+func WithLogLevel(level shared.LogLevel) Option {
 	return newOption(func(options *Options) {
 		options.logLevel = level
 	})
@@ -69,13 +70,6 @@ func WithLogLevel(level LogLevel) Option {
 func WithPort(port int) Option {
 	return newOption(func(options *Options) {
 		options.Port = port
-	})
-}
-
-//WithLogger set the logger, default is stdlib logger
-func WithLogger(logger Logger) Option {
-	return newOption(func(options *Options) {
-		options.logger = logger
 	})
 }
 
@@ -112,5 +106,11 @@ func WithInterfaces(interfaces ...Interface) Option {
 			}
 		}
 		options.interfaces = intfs
+	})
+}
+
+func WithHooks(h Hook) Option {
+	return newOption(func(options *Options) {
+		options.hook = h
 	})
 }

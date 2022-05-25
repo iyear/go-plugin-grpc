@@ -10,6 +10,7 @@ type Union interface {
 	Map() *shared.MapConv   // get MapConv when CodecType = Map, otherwise panic
 	Bytes() []byte          // get Bytes when CodeType = Bytes, otherwise panic
 	Type() shared.CodecType // get CodecType
+	Interface() interface{} // get interface{}
 }
 
 type nativeUnion struct {
@@ -34,6 +35,16 @@ func (u *nativeUnion) Bytes() []byte {
 
 func (u *nativeUnion) Type() shared.CodecType {
 	return shared.CodecType(u.ctype)
+}
+
+func (u *nativeUnion) Interface() interface{} {
+	switch u.Type() {
+	case shared.CodecTypeMap:
+		return u.Map()
+	case shared.CodecTypeBytes:
+		return u.Bytes()
+	}
+	return nil
 }
 
 func (u *nativeUnion) String() string {
