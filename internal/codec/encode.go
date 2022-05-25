@@ -8,7 +8,7 @@ import (
 
 func Encode(v interface{}) ([]byte, pb.CodecType, error) {
 	if v == nil {
-		return nil, pb.CodecType_Bytes, nil
+		return make([]byte, 0), pb.CodecType_Bytes, nil
 	}
 
 	switch t := v.(type) {

@@ -25,6 +25,7 @@ func main() {
 	p.Handle("EchoBytes2Map", EchoBytes2Map)
 	p.Handle("EchoBytes2Bytes", EchoBytes2Bytes)
 	p.Handle("Panic", Panic)
+	p.Handle("Nil", Nil)
 
 	if err := p.Mount("localhost", 13001); err != nil {
 		log.Println(err)
@@ -85,4 +86,9 @@ func EchoBytes2Bytes(ctx plugin.Context) (interface{}, error) {
 func Panic(ctx plugin.Context) (interface{}, error) {
 	ctx.L().Debug("I will panic")
 	panic(fmt.Errorf("panic info"))
+}
+
+func Nil(ctx plugin.Context) (interface{}, error) {
+	ctx.L().Debug("I will return nil")
+	return nil, nil
 }

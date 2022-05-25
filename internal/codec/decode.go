@@ -8,7 +8,7 @@ import (
 
 func Decode(bytes []byte, t pb.CodecType) (Union, error) {
 	if bytes == nil {
-		return &nativeUnion{ctype: t}, nil
+		return &nativeUnion{mmap: make(map[string]interface{}), b: make([]byte, 0), ctype: t}, nil
 	}
 
 	switch t {

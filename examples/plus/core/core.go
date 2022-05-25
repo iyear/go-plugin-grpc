@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/iyear/go-plugin-grpc/core"
+	"github.com/iyear/go-plugin-grpc/shared"
 	"google.golang.org/grpc"
 	"log"
 	"time"
@@ -10,7 +11,7 @@ import (
 
 func main() {
 	c := core.New("123",
-		core.WithLogLevel(core.LogLevelDebug),
+		core.WithLogLevel(shared.LogLevelDebug),
 		core.WithPort(13001),
 		core.WithInterfaces(map[string][]string{
 			"Math": {
@@ -24,6 +25,7 @@ func main() {
 		core.WithExecTimeout(time.Second*5),
 		core.WithServerOpts(grpc.WriteBufferSize(64*1024), grpc.ReadBufferSize(64*1024)),
 		core.WithHealthTimeout(time.Second*15),
+		core.WithHooks(&core.EmptyHook{}),
 	)
 	go func() {
 		if err := c.Serve(); err != nil {
@@ -49,6 +51,8 @@ func main() {
 	})
 	call(c, "EchoBytes2Map", []byte("hello"))
 	call(c, "EchoBytes2Bytes", []byte("hello"))
+
+	call(c, "Nil", nil)
 
 	//call(c, "Panic", nil)
 	select {}

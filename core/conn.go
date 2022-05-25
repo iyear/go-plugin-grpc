@@ -6,6 +6,7 @@ import (
 	mapset "github.com/deckarep/golang-set"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
 	"github.com/iyear/go-plugin-grpc/internal/util"
+	"github.com/iyear/go-plugin-grpc/shared"
 	"net"
 )
 
@@ -108,6 +109,9 @@ func (c *Core) bind(req *pb.BindRequest, comm pb.Conn_CommunicateServer) (*Plugi
 		funcs:    funcs,
 	}
 	c.plugins.Store(key, &info)
+
+	// plugin mount hook
+	c.opts.hook.OnPluginMount(c, &info)
 	return &info, nil
 }
 
@@ -116,9 +120,13 @@ func (c *Core) unbind(name, version string, req *pb.UnbindRequest) error {
 		return errors.New("invalid token")
 	}
 	key := util.GenKey(name, version)
-	if _, ok := c.plugins.Load(key); !ok {
+	p, ok := c.plugins.Load(key)
+	if !ok {
 		return fmt.Errorf("plugin %s.%s is not exists", name, version)
 	}
 	c.plugins.Delete(key)
+
+	// plugin unmount hook
+	c.opts.hook.OnPluginUnmount(c, p.(*PluginInfo), shared.UnbindReason(req.Reason), req.Msg)
 	return nil
 }

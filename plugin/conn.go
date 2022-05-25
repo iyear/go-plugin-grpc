@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
+	"github.com/iyear/go-plugin-grpc/shared"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 )
@@ -70,7 +71,7 @@ func (p *Plugin) Mount(target string, port int) error {
 }
 
 //unbind 填写参数msg将在Core打印解绑原因，如不需要传入nil
-func (p *Plugin) unbind(reason UnbindReason, msg *string) error {
+func (p *Plugin) unbind(reason shared.UnbindReason, msg *string) error {
 	b, err := proto.Marshal(&pb.UnbindRequest{
 		Reason: pb.UnbindReason(reason),
 		Token:  p.token,
@@ -83,7 +84,7 @@ func (p *Plugin) unbind(reason UnbindReason, msg *string) error {
 	return p.clients.comm.Send(&pb.CommunicateMsg{Type: pb.CommunicateType_Unbind, Data: b})
 }
 
-func (p *Plugin) Shutdown(reason UnbindReason, msg *string) []error {
+func (p *Plugin) Shutdown(reason shared.UnbindReason, msg *string) []error {
 	p.cron.Stop()
 
 	// 关闭连接

@@ -6,6 +6,7 @@ import (
 	"github.com/iyear/go-plugin-grpc/internal/codec"
 	"github.com/iyear/go-plugin-grpc/internal/pb"
 	"github.com/iyear/go-plugin-grpc/internal/util"
+	"github.com/iyear/go-plugin-grpc/shared"
 	"google.golang.org/protobuf/proto"
 	"time"
 )
@@ -80,6 +81,9 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 		return nil, err
 	}
 
+	// core send exec request hook
+	c.opts.hook.OnExecReq(c, p.(*PluginInfo), id, funcName, args)
+
 	// exec timeout
 	timer := time.NewTimer(c.opts.ExecTimeout)
 	defer timer.Stop()
@@ -89,6 +93,8 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 		return nil, fmt.Errorf("exec %s.%s.%s timeout", plugin, version, funcName)
 	case result := <-respCh:
 		if result.Err != nil {
+			// exec resp hook
+			c.opts.hook.OnExecResp(c, p.(*PluginInfo), result.ID, shared.CodecTypeBytes, nil, errors.New(*result.Err))
 			return nil, errors.New(*result.Err)
 		}
 
@@ -96,6 +102,10 @@ func (c *Core) Call(plugin, version, funcName string, args interface{}) (Result,
 		if err != nil {
 			return nil, err
 		}
+
+		// exec resp hook
+		c.opts.hook.OnExecResp(c, p.(*PluginInfo), result.ID, union.Type(), union.Interface(), nil)
+
 		return &nativeResult{
 			Union: union,
 		}, nil
