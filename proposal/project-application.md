@@ -245,6 +245,7 @@ type Union interface {
 	Map() *shared.MapConv   // get MapConv when CodecType = Map, otherwise panic
 	Bytes() []byte          // get Bytes when CodeType = Bytes, otherwise panic
 	Type() shared.CodecType // get CodecType
+    Interface() interface{} // get interface, map[string]interface{} or []byte
 }
 ```
 
@@ -273,6 +274,33 @@ type Union interface {
 为什么选择 `msgpack` 而不是 `protobuf` ？因为 `protobuf` 序列化 `map[string]interface{}` 需要使用 `google/protobuf/struct.proto` 序列化过程会将所有数字类型转为 `float64` 导致精度丢失。
 
 而 `msgpack` 会保留原有类型，甚至对 `time.Time` 等内置类型也做了适配。同时 `msgpack` 的语言兼容度、性能、资源占用与 `protobuf` 差距不大。为了数据安全性考虑选择 `msgpack` 。
+
+### Hooks 设计
+
+`Core` 收到来自 `Plugin` 的日志后如何向上层反馈？上层如何对一些关键节点进行事件监听并获取事件相关信息？
+
+框架为开发者提供了 `Hook` 功能，同时解决了以上两个问题。
+
+目前 `Hook` 定义如下：
+
+```go
+// package core
+type Hook interface {
+	OnPluginMount(c *Core, p *PluginInfo)
+	OnPluginUnmount(c *Core, p *PluginInfo, reason shared.UnbindReason, msg *string)
+	OnPluginPing(c *Core, p *PluginInfo)
+	OnPluginLog(c *Core, p *PluginInfo, level shared.LogLevel, msg string)
+	OnExecReq(c *Core, p *PluginInfo, id uint64, funcName string, args interface{})
+	OnExecResp(c *Core, p *PluginInfo, id uint64, t shared.CodecType, result interface{}, err error)
+	// ......
+}
+```
+
+事件的发生总是在 `Core` 与 `Plugin` 之间，所以每个事件都将传入包含双方实例/信息。
+
+同时框架提供了 `EmptyHook` ，用于开发者自定义Hooks，以此为基础进行函数重写。如此不会因为后期 `Hook` 事件增减而影响原代码。
+
+框架还提供了 `DefaultHook` ，为默认钩子实现，即只向标准输出流输出日志。
 
 ### 加强约束性
 
