@@ -1,15 +1,22 @@
-## 简介
-`Go Plugin over gRPC` 是一个轻量级的 `Golang` 双向通信插件框架，内置健康检查、插件管理、日志汇集等扩展功能。
+## Archived
+This repo is private during OSPP2022 application for writing code, writing proposals. 
 
-框架轻量且非常易于使用，你只需要花费一点时间即可迁移已有的插件实现，或者从零开始建立自己的插件系统。
+commit records the project evolution.
 
-## 快速开始
-我们首先实现一个简单的数学插件，支持加法和乘法。
+The current code is 60% complete, unit tests and other features will be committed to the main repo in the form of PRs.
 
-core.go:
-```go
+Project details: https://summer-ospp.ac.cn/#/org/prodetail/22abc0187
 
+Accepted announcement: https://summer-ospp.ac.cn/#/org/projectlist?nameCode=22abc0187
 
-```
+## Intro
+`Go Plugin over gRPC` is a lightweight `Golang` two-way communication plugin framework with built-in health check, plugin management, logging and other extensions.
 
+The framework is lightweight and very easy to use, you only need to spend a little time to migrate the existing plugin implementation, or build your own plugin system from scratch.
 
+## Dir
+
+- `core`/`plugin`/`internal`/`shared`: framework code
+- `proposal`: two email communication posts + project application
+- `docs`: documentation
+- `examples`: demo examples
