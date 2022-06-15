@@ -9,6 +9,8 @@ Project details: https://summer-ospp.ac.cn/#/org/prodetail/22abc0187
 
 Accepted announcement: https://summer-ospp.ac.cn/#/org/projectlist?nameCode=22abc0187
 
+This month's experience with OSPP2022 and the DevStream community will be covered in the blog post.
+
 ## Intro
 `Go Plugin over gRPC` is a lightweight `Golang` two-way communication plugin framework with built-in health check, plugin management, logging and other extensions.
 
