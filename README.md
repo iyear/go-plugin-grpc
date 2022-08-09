@@ -9,6 +9,8 @@ Project details: https://summer-ospp.ac.cn/#/org/prodetail/22abc0187
 
 Accepted announcement: https://summer-ospp.ac.cn/#/org/projectlist?nameCode=22abc0187
 
+Project repo: https://github.com/devstream-io/ospp-go-grpc
+
 This month's experience with OSPP2022 and the DevStream community will be covered in the blog post.
 
 ## Intro
