@@ -21,6 +21,6 @@ The framework is lightweight and very easy to use, you only need to spend a litt
 ## Dir
 
 - `core`/`plugin`/`internal`/`shared`: framework code
-- `proposal`: two email communication posts + project application
+- `proposal`: two email communication posts + project application + end of project
 - `docs`: documentation
 - `examples`: demo examples
